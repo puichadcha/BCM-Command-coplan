@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BCM Command Light — กผว.ฝก. 2569</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --abyss:#06212b; --deep:#0a2e3a; --sea:#0f3f4d; --sea2:#16505f; --current:#1e6c79;
+  --phos:#34d39e; --phos-dim:#1f9f78; --phos-glow:rgba(52,211,158,.35);
+  --beacon:#f0a830;
+  --paper:#eef4f3; --surface:#ffffff; --mist:#e7efee; --line:#d3e0df; --line2:#e3edec;
+  --ink:#0c2a30; --navy:#0c3540; --muted:#5d7a80; --cloud:#a8cdd2; --cloud-dim:#6e979e;
+  --vl:#1f9d6b; --l:#7cae3a; --m:#e0a52e; --h:#df7536; --e:#d23b4a;
+  --shadow:0 1px 2px rgba(6,33,43,.06),0 8px 30px rgba(6,33,43,.07);
+  --shadow-lg:0 24px 70px rgba(6,33,43,.18);
+  --r:16px;
+  --disp:"Bai Jamjuree",sans-serif; --body:"Sarabun",sans-serif; --mono:"IBM Plex Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.6;font-size:15px;
+  -webkit-font-smoothing:antialiased;font-weight:400}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.disp{font-family:var(--disp)} .mono{font-family:var(--mono);font-feature-settings:"tnum"}
+h1,h2,h3,h4{font-family:var(--disp);line-height:1.2;font-weight:600}
+::selection{background:var(--phos-glow)}
+
+/* contour texture (shared) */
+.contour{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:
+   radial-gradient(120% 80% at 18% 12%,rgba(52,211,158,.10),transparent 42%),
+   radial-gradient(90% 70% at 90% 88%,rgba(30,108,121,.30),transparent 55%);}
+.contour svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* ============ LOCK ============ */
+#lock{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:22px;
+  background:radial-gradient(140% 120% at 50% -10%,#11505e 0%,#0a2e3a 45%,#05181f 100%);overflow:hidden}
+#lock.hidden{display:none}
+.sweep{position:absolute;width:160vmax;height:160vmax;left:50%;top:-30%;transform:translateX(-50%);
+  background:conic-gradient(from 0deg,transparent 0deg,rgba(52,211,158,.13) 22deg,transparent 46deg);
+  animation:spin 9s linear infinite;pointer-events:none}
+.rings{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);pointer-events:none}
+.rings span{position:absolute;border:1px solid rgba(168,205,210,.16);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+@keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
+.lock-card{position:relative;z-index:2;width:min(440px,100%);background:rgba(10,46,58,.6);
+  border:1px solid rgba(168,205,210,.18);border-radius:22px;padding:40px 36px;text-align:center;
+  box-shadow:var(--shadow-lg);backdrop-filter:blur(14px)}
+.lock-tick{display:flex;justify-content:center;gap:5px;margin-bottom:22px}
+.lock-tick i{width:3px;height:13px;background:rgba(168,205,210,.3);border-radius:2px}
+.lock-tick i:nth-child(4){height:22px;background:var(--phos)}
+.lock-badge{width:62px;height:62px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;
+  font-size:27px;border:2px solid var(--phos);color:var(--phos);box-shadow:0 0 0 6px rgba(52,211,158,.12),inset 0 0 18px rgba(52,211,158,.18)}
+.lock-card h1{color:#eef9f6;font-size:25px;letter-spacing:.3px;font-weight:700}
+.lock-card .eyebrow{color:var(--phos);font-size:11px;letter-spacing:3px;text-transform:uppercase;font-family:var(--disp);font-weight:600;margin-bottom:7px}
+.lock-card .sub{color:var(--cloud);font-size:13.5px;margin-top:7px}
+.lock-card .yr{color:var(--cloud-dim);font-size:12px;margin-top:3px;letter-spacing:1.5px;font-family:var(--mono)}
+.lock-form{margin-top:28px;text-align:left}
+.lock-form label{display:block;font-size:11px;color:var(--cloud);margin-bottom:8px;font-family:var(--disp);
+  font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+.lock-form input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid rgba(168,205,210,.25);
+  background:rgba(6,24,31,.6);font-family:var(--mono);font-size:14px;color:#eef9f6;outline:none;transition:.18s}
+.lock-form input::placeholder{color:var(--cloud-dim)}
+.lock-form input:focus{border-color:var(--phos);box-shadow:0 0 0 3px var(--phos-glow)}
+.lock-btn{width:100%;margin-top:16px;padding:14px;border-radius:12px;color:#06212b;font-weight:700;font-size:15px;
+  font-family:var(--disp);background:linear-gradient(135deg,#4be3b0,#1f9f78);transition:.16s;letter-spacing:.5px}
+.lock-btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 26px var(--phos-glow)}
+.lock-hint{font-size:11.5px;color:var(--cloud-dim);margin-top:16px;text-align:center}
+.lock-hint b{color:var(--cloud)}
+.lock-err{color:#ffb0ad;font-size:12.5px;margin-top:11px;min-height:16px;text-align:center}
+
+/* ============ SHELL ============ */
+#app{display:none}
+#app.show{display:grid;grid-template-columns:262px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(185deg,#0b303c,#072028);color:var(--cloud);
+  display:flex;flex-direction:column;padding:22px 16px;border-right:1px solid rgba(168,205,210,.08);overflow:hidden}
+.sidebar .contour{opacity:.4}
+.sb-top{position:relative;z-index:2;display:flex;gap:12px;align-items:center;padding:4px 8px 20px;
+  border-bottom:1px solid rgba(168,205,210,.1);margin-bottom:14px}
+.sb-top .ico{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#4be3b0,#1f9f78);color:#06212b;
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 6px 18px var(--phos-glow)}
+.sb-top .t1{color:#eef9f6;font-family:var(--disp);font-weight:700;font-size:16px;line-height:1.15}
+.sb-top .t2{color:var(--cloud-dim);font-size:11px;font-family:var(--mono);margin-top:2px;letter-spacing:.5px}
+.nav{position:relative;z-index:2;display:flex;flex-direction:column;gap:4px;flex:1}
+.nav button{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:var(--cloud);
+  font-size:14px;text-align:left;transition:.14s;width:100%;font-family:var(--disp);font-weight:500;position:relative}
+.nav button .code{font-family:var(--mono);font-size:11px;color:var(--cloud-dim);width:22px;flex-shrink:0}
+.nav button .ni{font-size:16px;width:20px;text-align:center}
+.nav button:hover{background:rgba(168,205,210,.07);color:#eef9f6}
+.nav button:hover .code{color:var(--phos)}
+.nav button.active{background:linear-gradient(100deg,rgba(52,211,158,.18),rgba(31,159,120,.06));color:#eef9f6}
+.nav button.active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;
+  background:var(--phos);box-shadow:0 0 12px var(--phos)}
+.nav button.active .code{color:var(--phos)}
+.sb-foot{position:relative;z-index:2;margin-top:10px;padding-top:14px;border-top:1px solid rgba(168,205,210,.1)}
+.sb-status{font-family:var(--mono);font-size:10.5px;color:var(--cloud-dim);letter-spacing:.5px;padding:0 6px 12px;display:flex;align-items:center;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--phos);box-shadow:0 0 8px var(--phos);animation:pulse 2.4s ease infinite}
+@keyframes pulse{50%{opacity:.4}}
+.logout{width:100%;padding:11px 14px;border-radius:11px;color:var(--cloud-dim);font-size:13px;display:flex;align-items:center;
+  gap:10px;border:1px solid rgba(168,205,210,.12);font-family:var(--disp)}
+.logout:hover{background:rgba(210,59,74,.16);color:#ffc7c2;border-color:rgba(210,59,74,.3)}
+
+.main{min-width:0}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(238,244,243,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);padding:15px 36px;display:flex;align-items:center;gap:16px}
+.topbar .menu-btn{display:none;font-size:23px;color:var(--navy)}
+.topbar .eyebrow{font-family:var(--disp);font-size:10px;letter-spacing:2px;color:var(--phos-dim);text-transform:uppercase;font-weight:600}
+.topbar h2{font-size:18px;color:var(--navy);font-weight:600;line-height:1.1}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);
+  background:var(--surface);color:var(--muted);white-space:nowrap}
+.pill.live{color:var(--phos-dim);border-color:#bfe6d7;background:#eefaf4}
+.content{padding:34px 36px 50px;max-width:1200px}
+.page{display:none;animation:rise .4s cubic-bezier(.2,.7,.2,1)}
+.page.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ============ SECTION LABEL ============ */
+.sec{display:flex;align-items:baseline;gap:12px;margin:40px 0 16px}
+.sec .no{font-family:var(--mono);font-size:12px;color:var(--phos-dim);font-weight:600}
+.sec h3{font-size:18px;color:var(--navy);font-weight:600}
+.sec .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.sec:first-child{margin-top:0}
+.lead{color:var(--muted);font-size:14px;max-width:780px;margin:-6px 0 4px}
+
+/* ============ HERO CONSOLE ============ */
+.console{position:relative;border-radius:22px;overflow:hidden;color:#eef9f6;padding:32px 34px;
+  background:linear-gradient(135deg,#0b3744,#0a2e3a 60%,#08252e);box-shadow:var(--shadow-lg);margin-bottom:14px}
+.console .eyebrow{font-family:var(--disp);font-size:11px;letter-spacing:3px;color:var(--phos);text-transform:uppercase;font-weight:600;position:relative}
+.console h1{font-size:30px;font-weight:700;margin-top:8px;position:relative;letter-spacing:.2px}
+.console p{color:var(--cloud);margin-top:12px;font-size:14.5px;max-width:700px;position:relative}
+.console .chips{display:flex;gap:9px;margin-top:18px;flex-wrap:wrap;position:relative}
+.console .chips span{font-family:var(--mono);font-size:11.5px;background:rgba(168,205,210,.1);border:1px solid rgba(168,205,210,.2);
+  padding:6px 13px;border-radius:20px;color:var(--cloud)}
+/* instrument cluster */
+.cluster{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:34px}
+.gauge{position:relative;border-radius:16px;padding:18px 18px 16px;background:linear-gradient(160deg,#0e3c49,#0a2c37);
+  color:#eef9f6;overflow:hidden;border:1px solid rgba(168,205,210,.1);box-shadow:var(--shadow)}
+.gauge::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--phos)}
+.gauge.g-warn::after{background:var(--m)} .gauge.g-ok::after{background:var(--vl)} .gauge.g-mut::after{background:var(--cloud-dim)}
+.gauge .gl{font-family:var(--disp);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cloud-dim);font-weight:600}
+.gauge .gv{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;margin-top:9px;display:flex;align-items:baseline;gap:6px}
+.gauge .gv small{font-size:13px;color:var(--cloud)}
+.gauge .gs{font-size:11.5px;color:var(--cloud);margin-top:7px;line-height:1.4}
+.gauge .gdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+
+/* ============ CARDS / GRIDS ============ */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.pad{padding:22px 24px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1fr;align-items:stretch}
+.pstep{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center;
+  box-shadow:var(--shadow);position:relative;border-top:3px solid var(--phos)}
+.pstep .num{font-family:var(--disp);font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.pstep .ab{font-family:var(--disp);font-weight:700;font-size:27px;color:var(--navy);margin:5px 0 2px}
+.pstep .nm{font-size:12.5px;font-weight:600;color:var(--navy);font-family:var(--disp)}
+.pstep .ds{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.45}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--phos-dim);font-size:18px;font-weight:700}
+
+/* scenario */
+.scen{padding:18px;border-radius:14px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);
+  transition:.16s;border-bottom:3px solid transparent}
+.scen:hover{transform:translateY(-3px);border-bottom-color:var(--phos)}
+.scen .ic{font-size:27px}
+.scen .lb{font-family:var(--disp);font-size:10.5px;color:var(--phos-dim);font-weight:600;margin-top:9px;letter-spacing:1px;text-transform:uppercase}
+.scen .ti{font-size:14px;font-weight:600;color:var(--navy);margin-top:3px;font-family:var(--disp)}
+.scen .de{font-size:12px;color:var(--muted);margin-top:5px}
+
+/* risk levels */
+.lvls{display:flex;flex-direction:column;gap:9px}
+.lvl-row{display:flex;align-items:center;gap:14px;padding:12px 15px;border-radius:12px;background:var(--mist)}
+.lvl-chip{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:var(--mono);font-weight:600;font-size:15px;flex-shrink:0}
+.lvl-row .lt{font-weight:600;font-size:13.5px;color:var(--navy);font-family:var(--disp)}
+.lvl-row .ld{font-size:12px;color:var(--muted)}
+.bg-vl{background:var(--vl)}.bg-l{background:var(--l)}.bg-m{background:var(--m)}.bg-h{background:var(--h)}.bg-e{background:var(--e)}
+
+/* PDCA */
+.pdca{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.pdca-card{border-radius:14px;padding:17px;color:#eef9f6;background:linear-gradient(160deg,#0e3c49,#0a2c37);
+  box-shadow:var(--shadow);border:1px solid rgba(168,205,210,.1)}
+.pdca-card .l{font-family:var(--disp);font-size:22px;font-weight:700;color:var(--phos)}
+.pdca-card .t{font-family:var(--disp);font-size:13px;font-weight:600;margin:3px 0 5px}
+.pdca-card .c{font-family:var(--mono);font-size:11px;color:var(--cloud)}
+.pdca-card .d{font-size:11.5px;color:var(--cloud);margin-top:6px;line-height:1.45}
+
+/* iso clauses */
+.clauses{display:flex;flex-direction:column;gap:8px}
+.clause{display:flex;gap:15px;align-items:flex-start;padding:13px 16px;border-radius:12px;background:var(--surface);
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.clause .cn{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--phos-dim);flex-shrink:0;width:24px}
+.clause .ct{font-family:var(--disp);font-weight:600;font-size:14px;color:var(--navy)}
+.clause .cd{font-size:12px;color:var(--muted);margin-top:1px}
+
+/* 7 steps iso */
+.iso7{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.iso-card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow);
+  border-left:3px solid var(--phos)}
+.iso-card .h{font-family:var(--mono);font-size:11.5px;color:var(--phos-dim);font-weight:600}
+.iso-card .t{font-size:14px;font-weight:600;color:var(--navy);margin:5px 0 5px;font-family:var(--disp)}
+.iso-card .d{font-size:11.5px;color:var(--muted);line-height:1.45}
+
+/* abbr */
+.abbr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:13px}
+.abbr{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px;cursor:pointer;transition:.16s;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.abbr::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--phos);transform:scaleY(0);
+  transform-origin:top;transition:.2s}
+.abbr:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(15,63,77,.14)}
+.abbr:hover::before,.abbr.open::before{transform:scaleY(1)}
+.abbr .code{font-family:var(--disp);font-weight:700;font-size:19px;color:var(--navy)}
+.abbr .en{font-family:var(--mono);font-size:10.5px;color:var(--phos-dim);font-weight:500;margin-top:4px;line-height:1.3}
+.abbr .th{font-size:12.5px;color:var(--muted);max-height:0;overflow:hidden;opacity:0;transition:.26s}
+.abbr.open .th{max-height:140px;opacity:1;margin-top:9px}
+.abbr .more{position:absolute;top:15px;right:15px;font-size:13px;color:var(--phos-dim)}
+
+/* steps row */
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.step{background:var(--mist);border-radius:13px;padding:16px;border:1px solid var(--line)}
+.step .n{width:30px;height:30px;border-radius:9px;background:var(--navy);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-weight:600;font-size:13px;font-family:var(--mono)}
+.step .t{font-size:13.5px;font-weight:600;color:var(--navy);margin:10px 0 4px;font-family:var(--disp)}
+.step .d{font-size:11.5px;color:var(--muted);line-height:1.45}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+thead th{background:linear-gradient(180deg,#0c3540,#0a2c37);color:#dff3ef;font-family:var(--disp);font-weight:600;
+  font-size:12px;position:sticky;top:0;white-space:nowrap;letter-spacing:.3px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f4faf8}
+.scale-tbl td:first-child{font-weight:600;color:var(--navy)}
+.scale-tbl .n{font-family:var(--mono);font-weight:600;text-align:center;width:56px;color:var(--phos-dim)}
+
+/* matrix */
+.matrix{border-collapse:separate;border-spacing:6px;width:100%;max-width:700px}
+.matrix th{background:transparent;color:var(--muted);font-family:var(--disp);font-size:11px;font-weight:600;padding:5px;position:static;text-align:center;white-space:normal}
+.matrix th.rowh{text-align:right;width:128px;line-height:1.25;color:var(--navy)}
+.matrix th.corner{color:var(--phos-dim);font-family:var(--mono);font-size:10px}
+.mcell{border-radius:11px;height:54px;color:#fff;font-family:var(--mono);font-weight:600;font-size:15px;text-align:center;
+  cursor:pointer;position:relative;transition:.14s;border:2px solid transparent}
+.mcell:hover{transform:scale(1.06);box-shadow:0 8px 20px rgba(0,0,0,.2);z-index:2}
+.mcell.sel{border-color:#06212b;box-shadow:0 0 0 3px var(--phos-glow)}
+.mcell.empty{opacity:.42}
+.mcell .cnt{position:absolute;top:4px;right:6px;font-size:10px;background:rgba(255,255,255,.32);border-radius:8px;padding:0 5px;font-weight:600}
+.matrix-note{font-size:12px;color:var(--muted);margin-top:13px}
+
+/* stats */
+.stats{display:flex;gap:11px;flex-wrap:wrap;margin-bottom:18px}
+.stat{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px;
+  box-shadow:var(--shadow);border-bottom:3px solid var(--line)}
+.stat .v{font-family:var(--mono);font-size:27px;font-weight:600;line-height:1}
+.stat .k{font-size:12px;color:var(--muted);margin-top:6px;font-family:var(--disp);font-weight:500}
+.stat.s-vl{border-bottom-color:var(--vl)}.stat.s-vl .v{color:var(--vl)}
+.stat.s-l{border-bottom-color:var(--l)}.stat.s-l .v{color:var(--l)}
+.stat.s-m{border-bottom-color:var(--m)}.stat.s-m .v{color:var(--m)}
+.stat.s-h{border-bottom-color:var(--h)}.stat.s-h .v{color:var(--h)}
+.stat.s-e{border-bottom-color:var(--e)}.stat.s-e .v{color:var(--e)}
+.stat.s-t{border-bottom-color:var(--navy)}.stat.s-t .v{color:var(--navy)}
+
+.filter-bar{display:flex;align-items:center;gap:13px;margin:16px 0;flex-wrap:wrap}
+.filter-bar .info{font-size:13px;color:var(--navy);font-weight:500}
+.clr-btn{font-size:12.5px;color:var(--e);border:1px solid #f0c9cd;background:#fdedee;padding:6px 14px;border-radius:9px;font-weight:600}
+.clr-btn:hover{background:#fbe0e2}
+.lvl-badge{display:inline-block;min-width:32px;text-align:center;padding:3px 9px;border-radius:8px;color:#fff;
+  font-family:var(--mono);font-weight:600;font-size:12px}
+.cat-row td{background:linear-gradient(90deg,#0c3540,#16505f);color:#dff3ef;font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.3px}
+.lk-cell,.imp-max{font-family:var(--mono);text-align:center;font-weight:600;color:var(--navy)}
+
+/* watch list */
+.watch{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.watch-card{border-radius:14px;padding:17px 19px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);
+  border-left:4px solid var(--m);display:flex;gap:14px;align-items:flex-start}
+.watch-card.hi{border-left-color:var(--h)}
+.watch-card .wb{flex-shrink:0}
+.watch-card .wn{font-size:14px;font-weight:600;color:var(--navy);font-family:var(--disp)}
+.watch-card .wd{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.watch-card .wm{font-family:var(--mono);font-size:11px;color:var(--phos-dim);margin-top:7px}
+
+/* callouts */
+.callout{border-radius:14px;padding:16px 19px;font-size:13px;line-height:1.6;display:flex;gap:13px}
+.callout .ci{font-size:20px;flex-shrink:0}
+.co-info{background:#ecf6f6;border:1px solid #cae3e2;color:#0c474d}
+.co-warn{background:#fdf4e5;border:1px solid #f1d9a6;color:#7a5300}
+.co-ok{background:#ecf8f1;border:1px solid #bfe6cd;color:#155e35}
+.callout b{font-weight:600}
+
+/* doc strip */
+.docinfo{display:flex;gap:26px;flex-wrap:wrap;background:linear-gradient(135deg,#0c3540,#0a2c37);border-radius:14px;
+  padding:16px 22px;margin-bottom:20px;box-shadow:var(--shadow)}
+.docinfo div span{color:var(--cloud-dim);font-family:var(--disp);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:600;display:block}
+.docinfo div b{color:#eef9f6;font-weight:500;font-size:13px;font-family:var(--mono)}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.metric{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);
+  border-top:3px solid var(--current);transition:.15s}
+.metric:hover{transform:translateY(-3px)}
+.metric .mc{font-family:var(--disp);font-weight:700;font-size:21px;color:var(--navy)}
+.metric .me{font-family:var(--mono);font-size:10.5px;color:var(--phos-dim);margin-top:3px;line-height:1.3}
+.metric .md{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.45}
+.metric .mv{font-size:11.5px;color:var(--navy);margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);font-weight:500;font-family:var(--mono)}
+
+/* severity timeline */
+.timeline{display:flex;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
+.tband{flex:1;padding:13px 8px;text-align:center;font-size:11px;color:#fff;font-family:var(--mono);position:relative}
+.tband .tl{font-size:10px;opacity:.85;font-family:var(--disp);font-weight:600;display:block;margin-top:3px}
+.tband.mtpd{box-shadow:inset 0 0 0 3px #fff,0 0 0 2px var(--e)}
+.tband.mtpd::after{content:"MTPD 48 ชม.";position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+  font-family:var(--disp);font-size:10px;color:var(--e);font-weight:700;white-space:nowrap}
+
+/* cbf list */
+.cbf-list{display:flex;flex-direction:column;gap:11px}
+.cbf-item{display:flex;align-items:center;gap:15px;background:var(--surface);border:1px solid var(--line);border-radius:13px;
+  padding:15px 19px;box-shadow:var(--shadow)}
+.cbf-item .nn{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4be3b0,#1f9f78);color:#06212b;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.cbf-item .nt{font-size:14px;font-weight:500;color:var(--navy)}
+.cbf-item .tag{margin-left:auto;font-family:var(--disp);font-size:11px;background:#fdeef0;color:var(--e);border:1px solid #f2cdd1;
+  padding:5px 13px;border-radius:20px;font-weight:600;white-space:nowrap}
+
+/* decision flow */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.fnode{flex:1;min-width:130px;background:var(--mist);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;font-size:12.5px;color:var(--navy);font-weight:500}
+.fnode.q{background:#fdf4e5;border-color:#f1d9a6}
+.fnode.no{background:#fdeef0;border-color:#f2cdd1}
+.fnode .fi{font-size:20px;display:block;margin-bottom:6px}
+.fsep{display:flex;align-items:center;color:var(--phos-dim);font-weight:700;padding:0 8px}
+
+/* bcp */
+.bcp7{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px}
+.bcp-card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:flex-start}
+.bcp-card .bn{width:32px;height:32px;border-radius:9px;background:var(--navy);color:#fff;font-family:var(--mono);font-weight:600;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.bcp-card .bt{font-size:13.5px;font-weight:600;color:var(--navy);font-family:var(--disp)}
+.bcp-card .bd{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.activate{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-top:4px}
+.astep{background:linear-gradient(160deg,#0e3c49,#0a2c37);color:#eef9f6;border-radius:11px;padding:13px 15px;font-size:12px;
+  flex:1;min-width:120px;text-align:center;border:1px solid rgba(168,205,210,.12)}
+.astep .ai{font-size:18px;display:block;margin-bottom:5px;color:var(--phos)}
+.astep.q{background:linear-gradient(160deg,#5a4310,#3a2c08);border-color:rgba(240,168,48,.3)}
+.astep.q .ai{color:var(--beacon)}
+.asep{color:var(--phos-dim);padding:0 7px;font-weight:700}
+
+/* audit */
+.audit-head{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.prog-num{font-family:var(--mono);font-size:32px;font-weight:600;color:var(--navy)}
+.prog-wrap{flex:1;min-width:230px}
+.prog-bar{height:13px;background:#dde9e8;border-radius:9px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--phos),var(--vl));width:0;transition:.5s;border-radius:9px;box-shadow:0 0 12px var(--phos-glow)}
+.prog-txt{font-size:12.5px;color:var(--muted);margin-top:7px;font-family:var(--disp)}
+.reset-btn{font-size:12px;color:var(--muted);border:1px solid var(--line);background:var(--surface);padding:8px 15px;border-radius:9px;font-family:var(--disp);font-weight:500}
+.reset-btn:hover{background:var(--mist);color:var(--navy)}
+.chk-list{display:flex;flex-direction:column;gap:8px}
+.chk{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:13px 17px;box-shadow:var(--shadow);cursor:pointer;transition:.13s}
+.chk:hover{border-color:var(--phos)}
+.chk.done{background:#f2faf6;border-color:#c2e6d4}
+.chk .box{width:23px;height:23px;border-radius:7px;border:2px solid #bcd2cf;flex-shrink:0;margin-top:1px;display:flex;
+  align-items:center;justify-content:center;transition:.13s;font-size:13px;color:#fff}
+.chk.done .box{background:var(--phos-dim);border-color:var(--phos-dim)}
+.chk .num{font-family:var(--mono);font-size:12px;color:var(--phos-dim);font-weight:600;margin-top:2px;flex-shrink:0}
+.chk .ct{font-size:13.5px;color:var(--navy);font-weight:500}
+.chk.done .ct{color:var(--muted)}
+.chk .cd{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45;display:none}
+.chk.expand .cd{display:block}
+.audit-grp{display:flex;align-items:baseline;gap:11px;margin:22px 0 9px}
+.audit-grp .gc{font-family:var(--mono);font-size:12px;color:var(--phos-dim);font-weight:600}
+.audit-grp .gt{font-family:var(--disp);font-size:14px;font-weight:600;color:var(--navy)}
+.audit-grp .gl{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+
+.foot{text-align:center;color:var(--muted);font-size:11.5px;padding:40px 0 6px;line-height:1.7;font-family:var(--disp)}
+.scrim{display:none}
+
+@media(max-width:900px){
+  #app.show{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;z-index:80;width:262px;transform:translateX(-100%);transition:.26s}
+  .sidebar.open{transform:none}
+  .topbar .menu-btn{display:block}
+  .content{padding:24px 20px 40px}
+  .topbar{padding:14px 20px}
+  .cluster{grid-template-columns:1fr 1fr}
+  .pipe{grid-template-columns:1fr}.pipe .arrow{transform:rotate(90deg);padding:3px 0}
+  .iso7,.pdca,.metrics,.g4,.steps4,.watch,.g3{grid-template-columns:1fr 1fr}
+  .g2{grid-template-columns:1fr}
+  .console h1{font-size:23px}
+  .scrim.show{display:block;position:fixed;inset:0;background:rgba(6,33,43,.55);z-index:75}
+  .flow,.activate{flex-direction:column}.fsep,.asep{transform:rotate(90deg);padding:6px 0}
+  .timeline{flex-wrap:wrap}.tband{min-width:33%}
+}
+@media(max-width:560px){.cluster,.iso7,.pdca,.metrics,.g4,.steps4,.watch,.g3{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.sweep,.dot{animation:none}*{transition:none!important}}
+
+
+/* ===== LIGHT PASTEL THEME + NEW SECTIONS ===== */
+:root{
+  --abyss:#dff2f4; --deep:#eaf7f6; --sea:#d2eceb; --sea2:#bde0df; --current:#7bbfc0;
+  --phos:#64b9a5; --phos-dim:#4c9c8a; --phos-glow:rgba(100,185,165,.22);
+  --beacon:#e8b86b;
+  --paper:#f8fbfb; --surface:#ffffff; --mist:#f1f8f7; --line:#d9e9e7; --line2:#e9f2f1;
+  --ink:#25434a; --navy:#2c5961; --muted:#668188; --cloud:#d6efef; --cloud-dim:#8dafb4;
+  --shadow:0 1px 2px rgba(44,89,97,.05),0 10px 28px rgba(44,89,97,.06);
+  --shadow-lg:0 22px 60px rgba(44,89,97,.13);
+}
+#lock{background:linear-gradient(135deg,#f7fbfb 0%,#e7f5f4 46%,#d9eef0 100%)}
+.lock-card{background:rgba(255,255,255,.78);border-color:#d8ebe9;color:var(--ink)}
+.lock-card h1{color:var(--navy)}.lock-card .sub,.lock-card .yr,.lock-card .eyebrow,.lock-form label,.lock-hint{color:var(--muted)}
+.lock-form input{background:#fff;color:var(--ink);border-color:var(--line)}
+.lock-badge{background:#fff;color:var(--phos-dim);border-color:var(--phos-dim)}
+.sidebar{background:linear-gradient(180deg,#eef8f7,#d9eeee);color:var(--muted);border-right:1px solid var(--line)}
+.sb-top{border-bottom-color:var(--line)}.sb-top .t1{color:var(--navy)}.sb-top .t2,.nav button .code,.sb-status,.logout{color:var(--muted)}
+.nav button{color:var(--muted)}.nav button:hover,.nav button.active{color:var(--navy);background:rgba(100,185,165,.15)}
+.nav button.active{box-shadow:inset 0 0 0 1px rgba(100,185,165,.25)}
+.topbar{background:rgba(248,251,251,.86)}
+.console,.gauge,.pdca-card,.astep{background:linear-gradient(135deg,#e3f4f2,#cfe9e8);color:var(--ink);border:1px solid var(--line)}
+.console h1,.console p,.console .chips span,.gauge .gv,.gauge .gs,.gauge .gl,.pdca-card .t,.pdca-card .d,.pdca-card .c,.astep{color:var(--navy)}
+.console .eyebrow,.pdca-card .l,.astep .ai{color:var(--phos-dim)}
+.console .chips span{background:rgba(255,255,255,.65);border-color:var(--line)}
+thead th,.cat-row td{background:linear-gradient(180deg,#d3eceb,#bddfdf);color:var(--navy)}
+.docinfo{background:linear-gradient(135deg,#e4f5f4,#d2eceb)}.docinfo div b{color:var(--navy)}.docinfo div span{color:var(--muted)}
+.new-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:stretch;margin-bottom:18px}
+.mini-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.mini-card .k{font-family:var(--disp);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--phos-dim);font-weight:700}.mini-card .v{font-family:var(--disp);font-size:18px;color:var(--navy);font-weight:700;margin-top:4px}.mini-card .d{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.55}
+.call-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.person-node{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 14px;min-width:180px;box-shadow:var(--shadow)}.person-node .name{font-family:var(--disp);font-weight:700;color:var(--navy);font-size:13px}.person-node .role{font-size:11.5px;color:var(--muted);margin-top:3px}.person-node .tel{font-family:var(--mono);font-size:12px;color:var(--phos-dim);margin-top:4px}.flow-arrow{color:var(--phos-dim);font-weight:700}.download-card{display:flex;align-items:center;gap:14px;justify-content:space-between}.download-card a{display:inline-block;background:linear-gradient(135deg,#85cfc0,#64b9a5);color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;font-family:var(--disp);font-weight:700;font-size:13px}.download-card a:hover{filter:brightness(1.04)}
+.scenario-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.scenario-strip .scen{background:#fff}
+@media(max-width:900px){.new-hero,.scenario-strip{grid-template-columns:1fr}.call-flow{flex-direction:column;align-items:stretch}.flow-arrow{transform:rotate(90deg);align-self:center}}
+
+</style>
+</head>
+<body>
+
+<!-- ===== LOCK ===== -->
+<div id="lock">
+  <div class="sweep"></div>
+  <div class="rings" id="rings"></div>
+  <div class="lock-card">
+    <div class="lock-tick"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="lock-badge">⚓</div>
+    <div class="eyebrow">BCM Command</div>
+    <h1>กองแผนวิสาหกิจ</h1>
+    <div class="sub">การบริหารความต่อเนื่องทางธุรกิจ · กผว.ฝก.</div>
+    <div class="yr">การท่าเรือแห่งประเทศไทย · FY 2569</div>
+    <div class="lock-form">
+      <label>เข้าระบบด้วยอีเมลองค์กร</label>
+      <input id="email" type="text" placeholder="yourname@port.co.th" autocomplete="off" spellcheck="false">
+      <button class="lock-btn" id="unlockBtn">เข้าสู่ระบบ →</button>
+      <div class="lock-err" id="lockErr"></div>
+    </div>
+    <div class="lock-hint">เฉพาะอีเมลที่ลงท้ายด้วย <b>@port.co.th</b> เท่านั้น</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <div class="scrim" id="scrim" onclick="toggleSidebar(false)"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="contour"><svg viewBox="0 0 240 800" preserveAspectRatio="none"><g fill="none" stroke="rgba(168,205,210,.13)" stroke-width="1">
+      <path d="M-20 120 Q120 60 260 130"/><path d="M-20 180 Q120 120 260 195"/><path d="M-20 250 Q120 190 260 265"/>
+      <path d="M-20 340 Q120 290 260 360"/><path d="M-20 470 Q120 410 260 500"/><path d="M-20 600 Q120 540 260 640"/>
+      <path d="M-20 720 Q120 660 260 760"/></g></svg></div>
+    <div class="sb-top">
+      <div class="ico">⚓</div>
+      <div><div class="t1">BCM กผว.</div><div class="t2">FY 2569 · v.01</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="active" data-p="overview"><span class="code">00</span><span class="ni">◎</span> ภาพรวม BCM</button>
+      <button data-p="abbr"><span class="code">01</span><span class="ni">≡</span> คำย่อทั้งหมด</button>
+      <button data-p="ra"><span class="code">02</span><span class="ni">△</span> RA วิเคราะห์ความเสี่ยง</button>
+      <button data-p="bia"><span class="code">03</span><span class="ni">▦</span> BIA ผลกระทบธุรกิจ</button>
+      <button data-p="bcp"><span class="code">04</span><span class="ni">◳</span> BCP แผนรับมือ</button>
+      <button data-p="calltree"><span class="code">05</span><span class="ni">☎</span> Call Tree</button>
+      <button data-p="bcpdoc"><span class="code">06</span><span class="ni">▣</span> BCP ฉบับเอกสาร</button>
+      <button data-p="audit"><span class="code">07</span><span class="ni">✓</span> Internal Audit</button>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-status"><span class="dot"></span> ISO 22301:2019 · ระบบพร้อมใช้งาน</div>
+      <button class="logout" onclick="logout()">⏻ ออกจากระบบ</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="eyebrow" id="peyebrow">SECTION 00</div>
+        <h2 id="ptitle">ภาพรวม BCM</h2>
+      </div>
+      <div class="right">
+        <span class="pill live">● LIVE</span>
+        <span class="pill">ISO 22301</span>
+      </div>
+    </header>
+    <div class="content">
+
+      <!-- ============ OVERVIEW ============ -->
+      <section class="page active" id="page-overview">
+        <div class="console">
+          <div class="contour"><svg viewBox="0 0 900 320" preserveAspectRatio="none"><g fill="none" stroke="rgba(52,211,158,.14)" stroke-width="1.2">
+            <path d="M0 60 Q300 10 900 70"/><path d="M0 110 Q300 60 900 120"/><path d="M0 170 Q300 120 900 180"/>
+            <path d="M0 240 Q300 190 900 250"/></g></svg></div>
+          <div class="eyebrow">Business Continuity Management</div>
+          <h1>ศูนย์บัญชาการความต่อเนื่อง กผว.</h1>
+          <p>ระบบบริหารความต่อเนื่องทางธุรกิจของกองแผนวิสาหกิจ ฝก. ตามมาตรฐานสากล ISO 22301:2019 — รวบรวมผลการวิเคราะห์ความเสี่ยง ผลกระทบทางธุรกิจ แผนรับมือ และการตรวจประเมินภายในไว้ในที่เดียว</p>
+          <div class="chips"><span>📍 ท่าเรือกรุงเทพและส่วนงานสนับสนุน</span><span>📄 เอกสาร v.2569-01</span><span>🏛️ การท่าเรือแห่งประเทศไทย</span></div>
+        </div>
+
+        <div class="cluster">
+          <div class="gauge g-warn"><div class="gl">ความเสี่ยงสูงสุด</div><div class="gv"><span class="gdot bg-m" style="border-radius:50%"></span>M</div><div class="gs">ระดับปานกลาง · 2 รายการ</div></div>
+          <div class="gauge"><div class="gl">ภัยคุกคามทั้งหมด</div><div class="gv">34</div><div class="gs">VL 27 · L 5 · M 2 · H 0 · E 0</div></div>
+          <div class="gauge g-mut"><div class="gl">CBF</div><div class="gv">0</div><div class="gs">ไม่ผ่านเกณฑ์ในปีนี้</div></div>
+          <div class="gauge"><div class="gl">MTPD อ้างอิง</div><div class="gv">48<small>ชม.</small></div><div class="gs">ค่ามาตรฐาน กทท.</div></div>
+          <div class="gauge g-ok"><div class="gl">ความพร้อม Audit</div><div class="gv"><span id="gaugeAudit">0</span><small>%</small></div><div class="gs" id="gaugeAuditSub">27 หัวข้อตรวจประเมิน</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/01</span><h3>กระบวนการ BCM — ทำอะไร เรียงอะไร</h3><span class="ln"></span></div>
+        <div class="pipe">
+          <div class="pstep"><div class="num">ขั้นที่ 1</div><div class="ab">RA</div><div class="nm">Risk Analysis</div><div class="ds">ระบุภัยคุกคาม + ให้คะแนนโอกาสและผลกระทบ</div></div>
+          <div class="arrow">→</div>
+          <div class="pstep"><div class="num">ขั้นที่ 2</div><div class="ab">BIA</div><div class="nm">Business Impact Analysis</div><div class="ds">ระบุกิจกรรมสำคัญ (CBF) + กำหนด RTO/RPO/MTPD</div></div>
+          <div class="arrow">→</div>
+          <div class="pstep"><div class="num">ขั้นที่ 3</div><div class="ab">BCP</div><div class="nm">Continuity Plan</div><div class="ds">จัดทำแผนรับมือ + Call Tree + ทีมสำรอง</div></div>
+          <div class="arrow">→</div>
+          <div class="pstep"><div class="num">ขั้นที่ 4</div><div class="ab">IA</div><div class="nm">Internal Audit</div><div class="ds">ตรวจสอบ 27 หัวข้อ + ปรับปรุงปีถัดไป</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/02</span><h3>วงจร PDCA ตาม ISO 22301</h3><span class="ln"></span></div>
+        <p class="lead">มาตรฐานวางระบบ BCM บนวงจร Plan–Do–Check–Act เพื่อให้เกิดการปรับปรุงอย่างต่อเนื่อง โดยจับคู่กับข้อกำหนด (Clause) ดังนี้</p>
+        <div class="pdca">
+          <div class="pdca-card"><div class="l">P</div><div class="t">Plan — วางแผน</div><div class="c">Clause 4·5·6·7</div><div class="d">เข้าใจบริบท กำหนดนโยบาย วัตถุประสงค์ และจัดสรรทรัพยากร</div></div>
+          <div class="pdca-card"><div class="l">D</div><div class="t">Do — ปฏิบัติ</div><div class="c">Clause 8</div><div class="d">ทำ RA/BIA กำหนดกลยุทธ์ จัดทำและทดสอบแผน BCP</div></div>
+          <div class="pdca-card"><div class="l">C</div><div class="t">Check — ตรวจสอบ</div><div class="c">Clause 9</div><div class="d">ติดตามวัดผล ตรวจประเมินภายใน และทบทวนโดยฝ่ายบริหาร</div></div>
+          <div class="pdca-card"><div class="l">A</div><div class="t">Act — ปรับปรุง</div><div class="c">Clause 10</div><div class="d">แก้ไขข้อบกพร่อง (CAR/OFI) และปรับปรุงอย่างต่อเนื่อง</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/03</span><h3>4 สถานการณ์วิกฤต (Scenarios)</h3><span class="ln"></span></div>
+        <div class="g4">
+          <div class="scen"><div class="ic">🚢</div><div class="lb">สถานการณ์ 1</div><div class="ti">ท่าเรือหยุดให้บริการ</div><div class="de">ท่าเรือ/เครื่องจักรเสียหาย รับ-ส่งสินค้าไม่ได้</div></div>
+          <div class="scen"><div class="ic">🚫</div><div class="lb">สถานการณ์ 2</div><div class="ti">พนักงานเข้าทำงานไม่ได้</div><div class="de">ภัยพิบัติ/เหตุภายนอกทำให้เข้าที่ทำงานไม่ได้</div></div>
+          <div class="scen"><div class="ic">💻</div><div class="lb">สถานการณ์ 3</div><div class="ti">ระบบ IT ใช้ไม่ได้</div><div class="de">ระบบสารสนเทศ/ฐานข้อมูล/เครือข่ายล่ม</div></div>
+          <div class="scen"><div class="ic">🦠</div><div class="lb">สถานการณ์ 4</div><div class="ti">โรคระบาดใหญ่</div><div class="de">กระทบพนักงานและการปฏิบัติงานวงกว้าง</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/04</span><h3>ระดับความเสี่ยง 5 ระดับ</h3><span class="ln"></span></div>
+        <div class="card pad"><div class="lvls">
+          <div class="lvl-row"><div class="lvl-chip bg-vl">VL</div><div><div class="lt">Very Low — ต่ำมาก</div><div class="ld">ไม่ต้องเร่งดำเนินการ ติดตามตามปกติ</div></div></div>
+          <div class="lvl-row"><div class="lvl-chip bg-l">L</div><div><div class="lt">Low — ต่ำ</div><div class="ld">ติดตามต่อเนื่อง เตรียมมาตรการพื้นฐาน</div></div></div>
+          <div class="lvl-row"><div class="lvl-chip bg-m">M</div><div><div class="lt">Medium — ปานกลาง</div><div class="ld">ต้องมีแผนรับมือที่ชัดเจน</div></div></div>
+          <div class="lvl-row"><div class="lvl-chip bg-h">H</div><div><div class="lt">High — สูง</div><div class="ld">ต้องจัดการเร่งด่วน</div></div></div>
+          <div class="lvl-row"><div class="lvl-chip bg-e">E</div><div><div class="lt">Extreme — สูงมาก</div><div class="ld">ต้องมีแผน BCP ทันที</div></div></div>
+        </div></div>
+
+        <div class="sec"><span class="no">/05</span><h3>ข้อกำหนด ISO 22301:2019 (Clause 4–10)</h3><span class="ln"></span></div>
+        <div class="clauses">
+          <div class="clause"><div class="cn">4</div><div><div class="ct">บริบทขององค์กร (Context)</div><div class="cd">เข้าใจองค์กร ความต้องการผู้มีส่วนได้เสีย และกำหนดขอบเขต BCMS</div></div></div>
+          <div class="clause"><div class="cn">5</div><div><div class="ct">ภาวะผู้นำ (Leadership)</div><div class="cd">ความมุ่งมั่นของผู้บริหาร นโยบาย บทบาทและความรับผิดชอบ</div></div></div>
+          <div class="clause"><div class="cn">6</div><div><div class="ct">การวางแผน (Planning)</div><div class="cd">จัดการความเสี่ยง/โอกาส และกำหนดวัตถุประสงค์ BCM</div></div></div>
+          <div class="clause"><div class="cn">7</div><div><div class="ct">การสนับสนุน (Support)</div><div class="cd">ทรัพยากร ความสามารถ ความตระหนัก การสื่อสาร และการควบคุมเอกสาร</div></div></div>
+          <div class="clause"><div class="cn">8</div><div><div class="ct">การดำเนินงาน (Operation)</div><div class="cd">BIA & RA, กลยุทธ์ความต่อเนื่อง, แผน BCP และการทดสอบ</div></div></div>
+          <div class="clause"><div class="cn">9</div><div><div class="ct">การประเมินสมรรถนะ (Performance)</div><div class="cd">ติดตามวัดผล ตรวจประเมินภายใน และทบทวนโดยฝ่ายบริหาร</div></div></div>
+          <div class="clause"><div class="cn">10</div><div><div class="ct">การปรับปรุง (Improvement)</div><div class="cd">จัดการสิ่งไม่เป็นไปตามข้อกำหนด และปรับปรุงอย่างต่อเนื่อง</div></div></div>
+        </div>
+
+        <div class="sec"><span class="no">/06</span><h3>กระบวนการ BCM ทั้ง 7 ขั้น</h3><span class="ln"></span></div>
+        <div class="iso7">
+          <div class="iso-card"><div class="h">PM — ขั้น 1</div><div class="t">Project Management</div><div class="d">จัดโครงสร้างคณะทำงาน นโยบาย งบประมาณ และอบรม</div></div>
+          <div class="iso-card"><div class="h">RA — ขั้น 2</div><div class="t">Risk Assessment</div><div class="d">วิเคราะห์ภัยคุกคาม โอกาสเกิด ผลกระทบ</div></div>
+          <div class="iso-card"><div class="h">BIA — ขั้น 3</div><div class="t">Business Impact Analysis</div><div class="d">ระบุ CBF กำหนด RTO/RPO/MTPD</div></div>
+          <div class="iso-card"><div class="h">RS — ขั้น 4</div><div class="t">Recovery Strategy</div><div class="d">กำหนดกลยุทธ์กู้คืน ทางเลือกสำรอง</div></div>
+          <div class="iso-card"><div class="h">PD — ขั้น 5</div><div class="t">Plan Development</div><div class="d">เขียนแผน BCP อย่างเป็นทางการ</div></div>
+          <div class="iso-card"><div class="h">TE — ขั้น 6</div><div class="t">Testing & Exercising</div><div class="d">ทดสอบ Call Tree + Advance Exercise</div></div>
+          <div class="iso-card"><div class="h">PM — ขั้น 7</div><div class="t">Program Management</div><div class="d">สร้างวัฒนธรรม BCM ต่อเนื่อง IA ทุกปี</div></div>
+        </div>
+      </section>
+
+      <!-- ============ ABBR ============ -->
+      <section class="page" id="page-abbr">
+        <div class="callout co-info" style="margin-bottom:20px"><div class="ci">≡</div><div>พจนานุกรมคำย่อในระบบ BCM — <b>คลิกที่การ์ดเพื่อดูคำอธิบายภาษาไทยแบบเต็ม</b></div></div>
+        <div class="abbr-grid" id="abbrGrid"></div>
+      </section>
+
+      <!-- ============ RA ============ -->
+      <section class="page" id="page-ra">
+        <div class="docinfo">
+          <div><span>เอกสาร</span><b>กทท.–TP–RA</b></div>
+          <div><span>Version</span><b>2569-01</b></div>
+          <div><span>ผู้ดำเนินการ</span><b>นางสุนีย์ ท้วมเสม · ชกผว.</b></div>
+          <div><span>ผู้อนุมัติ</span><b>นางพรรณธิพา อุ่นจิตติ · อกผว.</b></div>
+        </div>
+
+        <div class="callout co-info" style="margin-bottom:8px"><div class="ci">△</div><div><b>หลักการ:</b> ระดับความเสี่ยง = โอกาสเกิด (Likelihood 1–5) × ผลกระทบสูงสุด (Impact 1–5) แล้วเทียบกับ Risk Matrix เพื่อแปลงเป็นระดับ VL/L/M/H/E</div></div>
+
+        <div class="sec"><span class="no">/01</span><h3>4 ขั้นตอนการทำ RA</h3><span class="ln"></span></div>
+        <div class="steps4">
+          <div class="step"><div class="n">1</div><div class="t">ระบุภัยคุกคาม</div><div class="d">ดูรายการ 34 ภัยคุกคาม + เพิ่มเติมได้ถ้ามี</div></div>
+          <div class="step"><div class="n">2</div><div class="t">ให้คะแนนโอกาสเกิด</div><div class="d">1–5 ตาม Scale A</div></div>
+          <div class="step"><div class="n">3</div><div class="t">ให้คะแนนผลกระทบ</div><div class="d">5 ด้าน คะแนน 1–5 ตาม Scale B</div></div>
+          <div class="step"><div class="n">4</div><div class="t">ระบุแนวทางรับมือ</div><div class="d">เขียนแผน/มาตรการ หรืออ้างคำสั่ง กทท.</div></div>
+        </div>
+
+        <div class="g2" style="margin-top:16px">
+          <div>
+            <div class="sec"><span class="no">/02</span><h3>Scale A — โอกาสเกิด</h3><span class="ln"></span></div>
+            <div class="tbl-wrap"><table class="scale-tbl">
+              <thead><tr><th>คะแนน</th><th>ระดับ</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td class="n">1</td><td>ต่ำมาก</td><td>เกิด 0 ครั้ง / อีก 5 ปีขึ้นไป</td></tr>
+                <tr><td class="n">2</td><td>ต่ำ</td><td>เกิด 1 ครั้ง / ใน 2–3 ปี</td></tr>
+                <tr><td class="n">3</td><td>ปานกลาง</td><td>เกิด 2 ครั้ง / ใน 1–2 ปี</td></tr>
+                <tr><td class="n">4</td><td>สูง</td><td>เกิด 3 ครั้ง / ใน 6 ด.–1 ปี</td></tr>
+                <tr><td class="n">5</td><td>สูงมาก</td><td>เกิด &gt;3 ครั้ง / ใน 1–6 เดือน</td></tr>
+              </tbody></table></div>
+          </div>
+          <div>
+            <div class="sec"><span class="no">/03</span><h3>Scale B — ผลกระทบ</h3><span class="ln"></span></div>
+            <div class="tbl-wrap"><table class="scale-tbl">
+              <thead><tr><th>คะแนน</th><th>ระดับ</th><th>ตัวอย่าง (การเงิน)</th></tr></thead>
+              <tbody>
+                <tr><td class="n">1</td><td>ต่ำมาก</td><td>ไม่สูญเสียรายได้</td></tr>
+                <tr><td class="n">2</td><td>ต่ำ</td><td>ผู้ใช้มีค่าใช้จ่ายเพิ่ม</td></tr>
+                <tr><td class="n">3</td><td>ปานกลาง</td><td>รายได้ล่าช้า ยอมรับได้</td></tr>
+                <tr><td class="n">4</td><td>สูง</td><td>รายได้ล่าช้า &gt;10 ล้าน</td></tr>
+                <tr><td class="n">5</td><td>สูงมาก</td><td>สูญรายได้เฉลี่ย 3 ชม.</td></tr>
+              </tbody></table></div>
+          </div>
+        </div>
+        <div class="callout co-info" style="margin-top:13px"><div class="ci">📊</div><div>RA ให้คะแนนผลกระทบ <b>5 ด้าน</b>: การปฏิบัติงาน · ลูกค้า · การเงิน · ความปลอดภัย · ชื่อเสียง (เกณฑ์ฉบับเต็มของ กทท. มี 7 ด้าน เพิ่มกฎหมายและเทคโนโลยีสารสนเทศ — ดูในหน้า BIA)</div></div>
+
+        <div class="sec"><span class="no">/04</span><h3>Risk Matrix — คลิกช่องเพื่อกรอง</h3><span class="ln"></span></div>
+        <div class="card pad">
+          <div style="overflow-x:auto"><table class="matrix" id="matrix"></table></div>
+          <div class="matrix-note">👆 ตัวเลขมุมขวาบน = จำนวนภัยคุกคามในช่องนั้น · คลิกเพื่อกรองตารางด้านล่าง</div>
+        </div>
+
+        <div class="sec"><span class="no">/05</span><h3>ภัยที่ควรจับตา (Watch List)</h3><span class="ln"></span></div>
+        <p class="lead">ภัยที่ระดับ M หรือมี Impact สูง (≥4) แม้โอกาสเกิดต่ำ — ควรเตรียมมาตรการรองรับเป็นพิเศษ</p>
+        <div class="watch">
+          <div class="watch-card"><div class="wb"><span class="lvl-badge bg-m">M</span></div><div><div class="wn">น้ำมันขาดแคลน (#29)</div><div class="wd">โอกาส 3 × Impact 3 — กระทบหลายด้านพร้อมกัน เพิ่มใหม่ปี 2569</div><div class="wm">รับมือ: มาตรการ กทท. / Work From Home</div></div></div>
+          <div class="watch-card"><div class="wb"><span class="lvl-badge bg-m">M</span></div><div><div class="wn">ภัยธรรมชาติ (#1)</div><div class="wd">โอกาส 4 × Impact 2 — โอกาสเกิดสูง น้ำท่วม/แผ่นดินไหว/ลมพายุ</div><div class="wm">รับมือ: Backup ข้อมูล / Work From Home</div></div></div>
+          <div class="watch-card hi"><div class="wb"><span class="lvl-badge bg-l">L</span></div><div><div class="wn">เพลิงไหม้/อัคคีภัย (#4)</div><div class="wd">โอกาส 1 × Impact 5 — โอกาสต่ำแต่ผลกระทบรุนแรงสูงสุดทุกด้าน</div><div class="wm">รับมือ: ดำเนินการตามมาตรการของ กทท.</div></div></div>
+          <div class="watch-card hi"><div class="wb"><span class="lvl-badge bg-l">L</span></div><div><div class="wn">สารเคมี/สินค้าอันตรายรั่วไหล (#11)</div><div class="wd">โอกาส 1 × Impact 5 — โอกาสต่ำแต่กระทบความปลอดภัย/ชื่อเสียงรุนแรง</div><div class="wm">รับมือ: ดำเนินการตามมาตรการของ กทท.</div></div></div>
+        </div>
+
+        <div class="sec"><span class="no">/06</span><h3>สรุปภัยคุกคามตามระดับ</h3><span class="ln"></span></div>
+        <div class="stats" id="raStats"></div>
+
+        <div class="filter-bar">
+          <span class="info" id="filterInfo">ภัยคุกคามทั้งหมด 34 รายการ — ของ กผว. ปี 2569</span>
+          <button class="clr-btn" id="clrBtn" style="display:none" onclick="clearFilter()">✕ ล้างตัวกรอง</button>
+        </div>
+        <div class="tbl-wrap"><table id="raTable">
+          <thead><tr><th>#</th><th style="min-width:250px">ภัยคุกคาม</th><th>โอกาส</th><th>Impact</th><th>ระดับ</th><th style="min-width:210px">แนวทางรับมือ</th></tr></thead>
+          <tbody id="raBody"></tbody>
+        </table></div>
+      </section>
+
+      <!-- ============ BIA ============ -->
+      <section class="page" id="page-bia">
+        <div class="docinfo">
+          <div><span>เอกสาร</span><b>กทท.–TP–BIA</b></div>
+          <div><span>Version</span><b>2569-01</b></div>
+          <div><span>ผู้จัดทำ</span><b>นางพรรณธิพา อุ่นจิตติ · อกผว.</b></div>
+          <div><span>เห็นชอบระดับฝ่าย</span><b>นายจิรวิชญ์ กล่อมเภรี · อฝก.</b></div>
+        </div>
+
+        <div class="sec"><span class="no">/01</span><h3>4 สถานการณ์ที่ BIA ครอบคลุม</h3><span class="ln"></span></div>
+        <div class="g4">
+          <div class="scen"><div class="ic">🚢</div><div class="lb">สถานการณ์ 1</div><div class="ti">ท่าเรือหยุดให้บริการ</div><div class="de">ท่าเรือ/เครื่องจักรเสียหาย รับ-ส่งสินค้าไม่ได้</div></div>
+          <div class="scen"><div class="ic">🚫</div><div class="lb">สถานการณ์ 2</div><div class="ti">พนักงานเข้าทำงานไม่ได้</div><div class="de">ภัยพิบัติ/เหตุภายนอกทำให้เข้าที่ทำงานไม่ได้</div></div>
+          <div class="scen"><div class="ic">💻</div><div class="lb">สถานการณ์ 3</div><div class="ti">ระบบ IT ใช้ไม่ได้</div><div class="de">ระบบสารสนเทศ/ฐานข้อมูล/เครือข่ายล่ม</div></div>
+          <div class="scen"><div class="ic">🦠</div><div class="lb">สถานการณ์ 4</div><div class="ti">โรคระบาดใหญ่</div><div class="de">กระทบพนักงานและการปฏิบัติงานวงกว้าง</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/02</span><h3>ตรรกะการพิจารณา CBF</h3><span class="ln"></span></div>
+        <div class="flow">
+          <div class="fnode"><span class="fi">📋</span>ประเมินผลกระทบ 7 ด้านของกิจกรรม</div>
+          <div class="fsep">→</div>
+          <div class="fnode q"><span class="fi">❓</span>กระทบ ≥4 ด้าน หรือเป็นบริการหลักของท่าเรือ?</div>
+          <div class="fsep">→</div>
+          <div class="fnode no"><span class="fi">✕</span>ไม่ผ่าน = ไม่ใช่ CBF<br>ไม่ต้องกรอกแบบที่ 2–4</div>
+        </div>
+
+        <div class="sec"><span class="no">/03</span><h3>กระบวนการของ กผว. ที่นำมาประเมิน</h3><span class="ln"></span></div>
+        <div class="cbf-list">
+          <div class="cbf-item"><div class="nn">1</div><div class="nt">การจัดทำแผนวิสาหกิจของ กทท.</div><div class="tag">ไม่ผ่านเกณฑ์ CBF</div></div>
+          <div class="cbf-item"><div class="nn">2</div><div class="nt">การจัดทำงบประมาณลงทุนประจำปีของ กทท.</div><div class="tag">ไม่ผ่านเกณฑ์ CBF</div></div>
+          <div class="cbf-item"><div class="nn">3</div><div class="nt">การจัดทำรายงานผลการดำเนินงานตามแผนวิสาหกิจของ กทท.</div><div class="tag">ไม่ผ่านเกณฑ์ CBF</div></div>
+        </div>
+
+        <div class="callout co-warn" style="margin-top:16px"><div class="ci">⚠️</div><div>
+          <b>กผว. — กิจกรรมไม่ผ่านเกณฑ์ CBF จึงไม่ต้องกรอกแบบที่ 2–4</b><br>
+          เหตุผล/ข้อจำกัด: งานหลักของหน่วยงานเป็นงานวิเคราะห์ จัดทำแผนกลยุทธ์และแผนธุรกิจ รวมทั้งติดตามผลการดำเนินงาน หากเกิดเหตุวิกฤตจึงสามารถปฏิบัติงานแบบ Work From Home ได้ในช่วงเวลาหนึ่งโดยไม่เกิดผลกระทบจากการหยุดชะงัก
+        </div></div>
+        <div class="callout co-info" style="margin-top:12px"><div class="ci">📘</div><div>
+          <b>เกณฑ์ผ่าน CBF:</b> งานที่ส่งผลกระทบตั้งแต่ <b>4 ด้านขึ้นไป</b> (จาก 7 ด้าน) หรือเป็นงานบริการหลักของท่าเรือ เช่น บริการท่าเทียบเรือ เก็บรักษาสินค้า ตู้สินค้าห้องเย็น บริการชายฝั่ง เครื่องมือทุ่นแรง และโครงสร้างพื้นฐานท่าเรือ
+        </div></div>
+
+        <div class="sec"><span class="no">/04</span><h3>ตัวชี้วัดสำคัญ — คลิกดูค่าอ้างอิง</h3><span class="ln"></span></div>
+        <div class="metrics" id="metrics"></div>
+        <div class="callout co-info" style="margin-top:14px"><div class="ci">💡</div><div><b>ความสัมพันธ์:</b> RPO &lt; RTO &lt; MTPD — ยิ่ง RTO สั้น ยิ่งต้องการทรัพยากรกู้คืนมาก · <b>ตัวอย่างคำนวณ RTO:</b> หากต้องย้ายสถานที่ (+24 ชม. สำหรับ FA/IT เตรียมระบบ) + เวลาทำงานเอง 4 ชม. = RTO 28 ชม.</div></div>
+
+        <div class="sec"><span class="no">/05</span><h3>ระดับผลกระทบที่เพิ่มขึ้นตามเวลา (Severity over Time)</h3><span class="ln"></span></div>
+        <p class="lead">BIA ประเมินว่าความรุนแรงเพิ่มขึ้นอย่างไรเมื่อการหยุดชะงักยืดเยื้อ โดยมี MTPD ที่ 48 ชั่วโมงเป็นเส้นวิกฤต</p>
+        <div style="padding-top:24px"><div class="timeline">
+          <div class="tband bg-vl">0–4<span class="tl">ชม.</span></div>
+          <div class="tband bg-vl">4–8<span class="tl">ชม.</span></div>
+          <div class="tband bg-l">8–24<span class="tl">ชม.</span></div>
+          <div class="tband bg-l">24–36<span class="tl">ชม.</span></div>
+          <div class="tband bg-m mtpd">36–48<span class="tl">ชม.</span></div>
+          <div class="tband bg-h">2–14<span class="tl">วัน</span></div>
+          <div class="tband bg-e">14–30<span class="tl">วัน</span></div>
+          <div class="tband bg-e">1–6<span class="tl">เดือน</span></div>
+        </div></div>
+
+        <div class="sec"><span class="no">/06</span><h3>4 แบบฟอร์ม BIA</h3><span class="ln"></span></div>
+        <div class="g2">
+          <div class="card pad"><div class="iso-card" style="border:0;box-shadow:none;padding:0;border-left:0"><div class="h">แบบที่ 1</div><div class="t" style="font-size:15px">Critical Business Function (CBF)</div><div class="d" style="font-size:12.5px">ระบุงานที่เป็น CBF โดยดูผลกระทบจากแต่ละ Scenario และกำหนดค่า MTPD / RTO / RPO / MAC</div></div></div>
+          <div class="card pad"><div class="iso-card" style="border:0;box-shadow:none;padding:0;border-left:0"><div class="h">แบบที่ 2</div><div class="t" style="font-size:15px">Dependency (ความเชื่อมโยง)</div><div class="d" style="font-size:12.5px">CBF รับงานมาจากไหน ทำเอง หรือส่งต่อที่ไหน รวมช่องทางรับ-ส่งข้อมูล</div></div></div>
+          <div class="card pad"><div class="iso-card" style="border:0;box-shadow:none;padding:0;border-left:0"><div class="h">แบบที่ 3</div><div class="t" style="font-size:15px">Minimum Resources</div><div class="d" style="font-size:12.5px">ทรัพยากรขั้นต่ำที่ CBF ต้องใช้ในภาวะฉุกเฉิน: บุคลากร PC/Notebook โทรศัพท์ สถานที่ ระบบ IT</div></div></div>
+          <div class="card pad"><div class="iso-card" style="border:0;box-shadow:none;padding:0;border-left:0"><div class="h">แบบที่ 4</div><div class="t" style="font-size:15px">Vital Records (ข้อมูลสำคัญ)</div><div class="d" style="font-size:12.5px">ข้อมูลสำคัญที่ CBF ต้องใช้ เก็บเป็น Hard Copy หรือ Soft Copy และเก็บไว้ที่ไหน</div></div></div>
+        </div>
+
+        <div class="sec"><span class="no">/07</span><h3>เกณฑ์ผลกระทบ 7 ด้าน — เทียบคะแนน 1 กับ 5</h3><span class="ln"></span></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>ด้าน</th><th>คะแนน 1 (ต่ำมาก)</th><th>คะแนน 5 (สูงมาก)</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;color:var(--navy)">การปฏิบัติงาน</td><td>ไม่หยุดชะงัก</td><td>หยุดชะงักต่อเนื่องนาน เกิน SLA</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ลูกค้า</td><td>ใช้บริการตามปกติ</td><td>หยุดใช้ / ย้ายไปใช้ที่อื่น</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">การเงิน</td><td>ไม่สูญเสียรายได้</td><td>สูญรายได้เฉลี่ย 3 ชม. ลูกค้าไปที่อื่น</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ความปลอดภัย</td><td>ไม่มีปัญหาความปลอดภัย</td><td>บุคลากร/ชุมชน/สื่อ กระทบวงกว้างรุนแรง</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ชื่อเสียง</td><td>ไม่มีข่าวเชิงลบ</td><td>ข่าวลบสะสม ล้างภาพลักษณ์ไม่ได้</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">กฎหมาย</td><td>ไม่มีข้อร้องเรียน/ผลทางกฎหมาย</td><td>ศาลพิพากษาให้มีความผิด หรือห้ามประกอบธุรกิจ</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">เทคโนโลยีสารสนเทศ</td><td>ระบบมีปัญหาแต่ไม่หยุดชะงัก</td><td>ระบบหลักหยุดเกิน 4 ชม. ใช้งานไม่ได้ทั้งหมด</td></tr>
+          </tbody></table></div>
+      </section>
+
+      <!-- ============ BCP ============ -->
+      <section class="page" id="page-bcp">
+        <div class="docinfo">
+          <div><span>เอกสาร</span><b>กทท.–BCP–กผว.</b></div>
+          <div><span>Version</span><b>2569-01</b></div>
+          <div><span>ทบทวน</span><b>ปีละ 1 ครั้งเป็นอย่างน้อย</b></div>
+        </div>
+        <div class="callout co-info" style="margin-bottom:8px"><div class="ci">◳</div><div>ส่วนนี้ใช้<b>กรอบมาตรฐาน ISO 22301 / กทท.</b> — เนื่องจาก กผว. ไม่มีกิจกรรมที่ผ่านเกณฑ์ CBF จึงยังไม่ต้องจัดทำแผน BCP เต็มรูปแบบ แต่เก็บโครงสร้างไว้เป็น template สำหรับปรับใช้เมื่อมี CBF</div></div>
+
+        <div class="sec"><span class="no">/01</span><h3>BCP และ Call Tree คืออะไร</h3><span class="ln"></span></div>
+        <div class="g2">
+          <div class="card pad" style="font-size:13px;line-height:1.8">
+            <b style="color:var(--navy);font-family:var(--disp)">แผน BCP</b><br>
+            • <b>จุดประสงค์</b> — เตรียมแผนรับมือล่วงหน้า ให้งานดำเนินต่อได้แม้เกิดวิกฤต<br>
+            • <b>อ้างอิงจาก</b> — ผลการทำ RA และ BIA (CBF + ทรัพยากร)<br>
+            • <b>ทบทวน</b> — ทุกปี อย่างน้อย 1 ครั้ง<br>
+            • <b>เลขกำกับ</b> — 2569-01 ตรงกันทุกเอกสาร<br>
+            • <b>นิยาม</b> — แผนตอบสนอง ฟื้นฟู และกลับมาดำเนินงานในระดับที่ยอมรับขั้นต่ำหลังการหยุดชะงัก
+          </div>
+          <div class="card pad" style="font-size:13px;line-height:1.8">
+            <b style="color:var(--navy);font-family:var(--disp)">Call Tree</b><br>
+            • <b>คือ</b> — แผนผังสายการแจ้งเตือนฉุกเฉิน<br>
+            • <b>เป้าหมาย</b> — แจ้งทุกคนที่เกี่ยวข้องให้เร็วที่สุด<br>
+            • <b>ทดสอบ</b> — เป็นประจำเพื่อสร้างความตระหนัก<br>
+            • <b>รหัสเอกสาร</b> — กทท.-BCP-กผว.<br>
+            • <b>ทำลายเอกสารเก่า</b> — เมื่อมีฉบับใหม่
+          </div>
+        </div>
+
+        <div class="sec"><span class="no">/02</span><h3>ขั้นตอนการประกาศใช้แผน (Activation Flow)</h3><span class="ln"></span></div>
+        <div class="activate">
+          <div class="astep"><span class="ai">⚡</span>เกิดเหตุ</div><div class="asep">→</div>
+          <div class="astep"><span class="ai">🔍</span>ทีมประเมินความเสียหาย</div><div class="asep">→</div>
+          <div class="astep q"><span class="ai">❓</span>เข้าเกณฑ์ประกาศ?</div><div class="asep">→</div>
+          <div class="astep"><span class="ai">📢</span>ประกาศใช้ BCP + Call Tree</div><div class="asep">→</div>
+          <div class="astep"><span class="ai">🏢</span>ตั้ง War Room</div><div class="asep">→</div>
+          <div class="astep"><span class="ai">⚙️</span>ดำเนินการ CBF ตาม RTO</div><div class="asep">→</div>
+          <div class="astep"><span class="ai">🔄</span>ฟื้นฟูสู่ภาวะปกติ</div>
+        </div>
+
+        <div class="sec"><span class="no">/03</span><h3>โครงสร้างแผน BCP — 7 องค์ประกอบ</h3><span class="ln"></span></div>
+        <div class="bcp7">
+          <div class="bcp-card"><div class="bn">1</div><div><div class="bt">คณะทำงาน BCP</div><div class="bd">ทีมหลัก ทีมสำรอง บทบาท</div></div></div>
+          <div class="bcp-card"><div class="bn">2</div><div><div class="bt">ทีมประเมินความเสียหาย</div><div class="bd">ประเมิน damage เมื่อเกิดเหตุ</div></div></div>
+          <div class="bcp-card"><div class="bn">3</div><div><div class="bt">เกณฑ์ประกาศ BCP</div><div class="bd">เงื่อนไขที่ต้องเปิดใช้แผน</div></div></div>
+          <div class="bcp-card"><div class="bn">4</div><div><div class="bt">การสื่อสารเหตุวิกฤต</div><div class="bd">Crisis Communication + Call Tree</div></div></div>
+          <div class="bcp-card"><div class="bn">5</div><div><div class="bt">การจัดตั้ง War Room</div><div class="bd">ศูนย์บัญชาการเหตุฉุกเฉิน</div></div></div>
+          <div class="bcp-card"><div class="bn">6</div><div><div class="bt">กระบวนการ BCP</div><div class="bd">ขั้นตอนดำเนินงานแต่ละ CBF</div></div></div>
+          <div class="bcp-card"><div class="bn">7</div><div><div class="bt">แผนฟื้นฟูสู่ภาวะปกติ</div><div class="bd">Recovery Plan หลังวิกฤตผ่านไป</div></div></div>
+        </div>
+
+        <div class="sec"><span class="no">/04</span><h3>ปฏิทิน BCM ประจำปี</h3><span class="ln"></span></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>กิจกรรม</th><th>ความถี่</th><th>หมายเหตุ</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;color:var(--navy)">ทบทวน RA</td><td>ปีละ 1 ครั้ง+</td><td>ตาม ISO 22301</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ทบทวน BIA</td><td>ปีละ 1 ครั้ง+</td><td>ปรับปรุงหาก CBF เปลี่ยน</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ทดสอบ Call Tree</td><td>เป็นประจำ</td><td>สร้างความตระหนัก BCM</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ทดสอบแผน BCP</td><td>ปีละ 1 ครั้ง</td><td>Advance Exercise</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">Internal Audit</td><td>ปีละ 1 ครั้ง</td><td>ตรวจ 27 หัวข้อ</td></tr>
+            <tr><td style="font-weight:600;color:var(--navy)">ปรับปรุงเอกสาร BCP</td><td>หลังทดสอบ/IA</td><td>ทำลายเอกสารเก่า</td></tr>
+          </tbody></table></div>
+      </section>
+
+
+
+      <!-- ============ CALL TREE ============ -->
+      <section class="page" id="page-calltree">
+        <div class="docinfo">
+          <div><span>ภาคผนวก</span><b>Call Tree กผว.</b></div>
+          <div><span>เอกสาร</span><b>ปี 69 / ปรับปรุง</b></div>
+          <div><span>ผู้ประสานงานหลัก</span><b>นางพรรณธิพา อุ่นจิตติ</b></div>
+          <div><span>ผู้ประสานงานสำรอง</span><b>นางสุนีย์ ท้วมเสม</b></div>
+        </div>
+
+        <div class="new-hero">
+          <div class="mini-card">
+            <div class="k">Emergency Communication</div>
+            <div class="v">แผนผังการแจ้งเหตุฉุกเฉินภายในหน่วยงาน</div>
+            <div class="d">ใช้เมื่อมีการประกาศใช้แผน BCP หรือเกิดเหตุที่ต้องแจ้งบุคลากร กผว. แบบเร่งด่วน โดยเริ่มจากผู้ประสานงานหลัก/สำรอง แล้วกระจายสายต่อเป็นลำดับ</div>
+          </div>
+          <div class="mini-card download-card">
+            <div><div class="k">Source File</div><div class="v">แนบไฟล์ต้นฉบับไว้ใน GitHub</div><div class="d">วางไว้ในโฟลเดอร์ <span class="mono">/docs</span></div></div>
+            <a href="docs/call-tree-2569.doc" download>ดาวน์โหลด DOC</a>
+          </div>
+        </div>
+
+        <div class="sec"><span class="no">/01</span><h3>Call Tree Flow</h3><span class="ln"></span></div>
+        <div class="card pad">
+          <div class="call-flow">
+            <div class="person-node"><div class="name">นางพรรณธิพา อุ่นจิตติ</div><div class="role">ผู้ประสานงาน / รับแจ้งคนแรก</div><div class="tel">081-731-8944</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="person-node"><div class="name">นางสุนีย์ ท้วมเสม</div><div class="role">Backup / กระจายสายหลัก</div><div class="tel">094-495-4051</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="person-node"><div class="name">นายเจษฎา / น.ส.กุลนรินธร์ / น.ส.พิชชานันท์</div><div class="role">ผู้โทรต่อระดับถัดไป</div><div class="tel">Branch Contact</div></div>
+          </div>
+        </div>
+
+        <div class="sec"><span class="no">/02</span><h3>รายชื่อและเบอร์ติดต่อ</h3><span class="ln"></span></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>ลำดับ</th><th>ชื่อ-นามสกุล</th><th>บทบาทใน Call Tree</th><th>มือถือ</th><th>หมายเหตุ</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>นางพรรณธิพา อุ่นจิตติ</td><td>ผู้ประสานงานหลัก</td><td class="mono">081-731-8944</td><td>รับแจ้งเหตุคนแรก</td></tr>
+            <tr><td>2</td><td>นางสุนีย์ ท้วมเสม</td><td>ผู้ประสานงานสำรอง / ผู้โทรต่อ</td><td class="mono">094-495-4051</td><td>โทรต่อไปยัง 3 สายหลัก</td></tr>
+            <tr><td>3</td><td>นายเจษฎา ผุดเพชรแก้ว</td><td>ผู้โทรต่อ</td><td class="mono">088-623-2470</td><td>โทรต่อไปยัง ณัฐพงษ์ และ ศุภสัณห์</td></tr>
+            <tr><td>4</td><td>นายณัฐพงษ์ คำรักเกียรติเจริญ</td><td>ผู้รับแจ้ง</td><td class="mono">065-587-9632</td><td>-</td></tr>
+            <tr><td>5</td><td>นายศุภสัณห์ ฟูเกียรติ</td><td>ผู้รับแจ้ง</td><td class="mono">096-869-2591</td><td>-</td></tr>
+            <tr><td>6</td><td>นางสาวกุลนรินธร์ ชัชวาลย์</td><td>ผู้โทรต่อ</td><td class="mono">061-442-4461</td><td>โทรต่อไปยัง ฐานีย์ และ กิตติพงศ์</td></tr>
+            <tr><td>7</td><td>นางสาวฐานีย์ เผือกหอม</td><td>ผู้รับแจ้ง</td><td class="mono">089-169-1010</td><td>-</td></tr>
+            <tr><td>8</td><td>นายกิตติพงศ์ เกิดนก</td><td>ผู้รับแจ้ง</td><td class="mono">092-280-9594</td><td>-</td></tr>
+            <tr><td>9</td><td>นางสาวพิชชานันท์ โฆษิตศิริทัศน์</td><td>ผู้โทรต่อ</td><td class="mono">083-971-2575</td><td>สายหลักลำดับที่ 3</td></tr>
+            <tr><td>10</td><td>นายจีราวิทย์ กิจสมัคร</td><td>ผู้รับแจ้ง</td><td class="mono">093-236-8951</td><td>-</td></tr>
+            <tr><td>11</td><td>นางสาวดุษฎีพร กลิ่นวิชิต</td><td>ผู้รับแจ้ง</td><td class="mono">080-534-2422</td><td>-</td></tr>
+            <tr><td>12</td><td>นวช.6 (ว่าง)</td><td>ตำแหน่งว่าง</td><td class="mono">-</td><td>ตรวจสอบเมื่อมีการปรับโครงสร้าง</td></tr>
+          </tbody></table></div>
+
+        <div class="callout co-warn" style="margin-top:16px"><div class="ci">⚠️</div><div><b>หมายเหตุ:</b> หน้าเว็บนี้มีเบอร์โทรศัพท์ภายใน ควรตั้ง Repository เป็น <b>Private</b> หากยังไม่ต้องการเผยแพร่ต่อสาธารณะ</div></div>
+      </section>
+
+      <!-- ============ BCP DOCUMENT ============ -->
+      <section class="page" id="page-bcpdoc">
+        <div class="docinfo">
+          <div><span>ชื่อเอกสาร</span><b>แผนบริหารความต่อเนื่องทางธุรกิจ</b></div>
+          <div><span>Document Code</span><b>ทกท.-BCP-กผว.</b></div>
+          <div><span>Version</span><b>2569-01</b></div>
+          <div><span>วันที่ลงนาม</span><b>24 เมษายน 2569</b></div>
+        </div>
+
+        <div class="new-hero">
+          <div class="mini-card">
+            <div class="k">Business Continuity Plan</div>
+            <div class="v">สรุปเอกสาร BCP กผว. สำหรับท่าเรือกรุงเทพและส่วนงานสนับสนุน</div>
+            <div class="d">หน้าเอกสารนี้สรุปวัตถุประสงค์ ขอบเขต สถานการณ์ และภาคผนวกที่ต้องใช้ประกอบการดำเนินความต่อเนื่องทางธุรกิจ</div>
+          </div>
+          <div class="mini-card download-card">
+            <div><div class="k">Source File</div><div class="v">ไฟล์ BCP ฉบับเต็ม</div><div class="d">แนบไว้ในโฟลเดอร์ <span class="mono">/docs</span></div></div>
+            <a href="docs/bcp-kpw-2569-01.doc" download>ดาวน์โหลด DOC</a>
+          </div>
+        </div>
+
+        <div class="sec"><span class="no">/01</span><h3>วัตถุประสงค์ของแผน</h3><span class="ln"></span></div>
+        <div class="g2">
+          <div class="mini-card"><div class="k">Objective 1</div><div class="v">เตรียมความพร้อมองค์กร</div><div class="d">รองรับเหตุภัยพิบัติที่อาจทำให้การปฏิบัติงานของท่าเรือกรุงเทพเกิดการหยุดชะงัก</div></div>
+          <div class="mini-card"><div class="k">Objective 2</div><div class="v">ตอบสนองและบรรเทาผลกระทบ</div><div class="d">ลดผลกระทบต่อผู้มีส่วนได้เสียหลัก ชื่อเสียง ภาพลักษณ์ และการปฏิบัติงานทางธุรกิจที่สำคัญ</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/02</span><h3>4 สถานการณ์ตามเอกสาร BCP</h3><span class="ln"></span></div>
+        <div class="scenario-strip">
+          <div class="scen"><div class="ic">🚢</div><div class="lb">Scenario 1</div><div class="ti">ท่าเรือหยุดให้บริการ</div><div class="de">การให้บริการของท่าเรือเกิดการหยุดชะงัก</div></div>
+          <div class="scen"><div class="ic">🚫</div><div class="lb">Scenario 2</div><div class="ti">พนักงานเข้าทำงานไม่ได้</div><div class="de">พนักงานไม่สามารถเข้าทำงานที่การท่าเรือ</div></div>
+          <div class="scen"><div class="ic">💻</div><div class="lb">Scenario 3</div><div class="ti">ระบบ IT ใช้งานไม่ได้</div><div class="de">ระบบสารสนเทศไม่สามารถใช้งานได้</div></div>
+          <div class="scen"><div class="ic">🦠</div><div class="lb">Scenario 4</div><div class="ti">โรคระบาดใหญ่</div><div class="de">กระทบการทำงานและบุคลากรในวงกว้าง</div></div>
+        </div>
+
+        <div class="sec"><span class="no">/03</span><h3>สถานะการปฏิบัติงานทางธุรกิจที่สำคัญ</h3><span class="ln"></span></div>
+        <div class="callout co-ok"><div class="ci">✓</div><div>ตามแบบฟอร์มในเอกสาร BCP ของ กผว. แต่ละสถานการณ์ระบุว่า <b>ไม่ได้รับผลกระทบ / ไม่มีการปฏิบัติงานทางธุรกิจที่สำคัญ</b> จึงใช้เอกสารนี้เป็นกรอบเตรียมพร้อมและหลักฐาน BCM ประจำปี</div></div>
+
+        <div class="sec"><span class="no">/04</span><h3>ภาคผนวกในเอกสาร</h3><span class="ln"></span></div>
+        <div class="bcp7">
+          <div class="bcp-card"><div class="bn">1</div><div><div class="bt">Call Tree</div><div class="bd">แผนผังการแจ้งเหตุฉุกเฉินภายในหน่วยงาน</div></div></div>
+          <div class="bcp-card"><div class="bn">2</div><div><div class="bt">ทรัพยากรที่ต้องการ</div><div class="bd">ทรัพยากร เอกสาร Vital Record และระบบ IT ที่ต้องเตรียม</div></div></div>
+          <div class="bcp-card"><div class="bn">3</div><div><div class="bt">รายชื่อผู้ติดต่อ</div><div class="bd">บุคคล/หน่วยงานภายในและภายนอกที่จำเป็นต้องติดต่อ</div></div></div>
+        </div>
+      </section>
+
+      <!-- ============ AUDIT ============ -->
+      <section class="page" id="page-audit">
+        <div class="callout co-info" style="margin-bottom:18px"><div class="ci">✓</div><div>
+          27 หัวข้อตรวจประเมินภายใน จัดกลุ่มตามข้อกำหนด <b>ISO 22301:2019 (Clause 4–10)</b> — คลิก checkbox เพื่อติดตามความคืบหน้า · คลิกข้อความเพื่อดูเอกสารหลักฐานที่ต้องแสดง
+          <br><span style="font-size:11.5px;color:var(--muted)">หมายเหตุ: เป็น template มาตรฐาน โปรดเทียบกับแบบฟอร์ม IA จริงของหน่วยงานก่อนใช้</span>
+        </div></div>
+        <div class="card pad" style="margin-bottom:18px"><div class="audit-head">
+          <div class="prog-num"><span id="progDone">0</span>/27</div>
+          <div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" id="progFill"></div></div><div class="prog-txt" id="progTxt">ยังไม่เริ่มตรวจ</div></div>
+          <button class="reset-btn" onclick="resetAudit()">↺ ล้างทั้งหมด</button>
+        </div></div>
+        <div id="auditList"></div>
+      </section>
+
+      <div class="foot">
+        BCM Command — กองแผนวิสาหกิจ (กผว.) ฝก. · การท่าเรือแห่งประเทศไทย<br>
+        Business Continuity Management ตามมาตรฐาน ISO 22301:2019 · ปีงบประมาณ 2569
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ===== DATA ===== */
+const ABBR=[
+ ["BCM","Business Continuity Management","การบริหารความต่อเนื่องทางธุรกิจ"],
+ ["BCMS","BCM System","ระบบการบริหารความต่อเนื่องทางธุรกิจ ตาม ISO 22301"],
+ ["BCP","Business Continuity Plan","แผนรองรับการดำเนินธุรกิจอย่างต่อเนื่อง"],
+ ["BIA","Business Impact Analysis","การวิเคราะห์ผลกระทบทางธุรกิจ"],
+ ["RA","Risk Analysis","การวิเคราะห์ความเสี่ยง"],
+ ["CBF","Critical Business Function","การปฏิบัติงานทางธุรกิจที่สำคัญ"],
+ ["RTO","Recovery Time Objective","เวลาเป้าหมายในการกู้คืนระบบ/งาน (ต้องน้อยกว่า MTPD)"],
+ ["RPO","Recovery Point Objective","จุดข้อมูลเป้าหมายในการกู้คืน (เกี่ยวกับความถี่ Backup)"],
+ ["MTPD","Maximum Tolerable Period of Disruption","ระยะเวลาสูงสุดที่ยอมรับได้ของการหยุดชะงัก"],
+ ["MAC","Minimum Activity Criteria","เกณฑ์กิจกรรมขั้นต่ำที่ยังต้องคงไว้ในภาวะวิกฤต"],
+ ["SLA","Service Level Agreement","ข้อตกลงระดับการให้บริการ"],
+ ["PDCA","Plan-Do-Check-Act","วงจรการบริหารเพื่อปรับปรุงอย่างต่อเนื่อง"],
+ ["ISO 22301","International Standard for BCM","มาตรฐานสากลระบบบริหารความต่อเนื่องทางธุรกิจ"],
+ ["CAR","Corrective Action Request","คำขอดำเนินการแก้ไข (จากผู้ตรวจ)"],
+ ["OFI","Opportunity For Improvement","โอกาสในการปรับปรุง (ข้อเสนอแนะจากผู้ตรวจ)"],
+ ["IA","Internal Audit","การตรวจประเมินภายใน"],
+ ["กผว.","กองแผนวิสาหกิจ","หน่วยงานเจ้าของระบบ BCM นี้ สังกัด ฝก."],
+ ["กทท.","Port Authority of Thailand","การท่าเรือแห่งประเทศไทย (PAT)"],
+];
+const THREATS=[
+ [1,"nat","การเกิดภัยธรรมชาติ (น้ำท่วม แผ่นดินไหว ลมพายุ)",4,2,"M","Backup ข้อมูลสำคัญสม่ำเสมอ / Work From Home"],
+ [2,"nat","การเกิดโรคระบาด",2,1,"VL","ปฏิบัติตามแนวทางของสาธารณสุข"],
+ [3,"nat","เฝ้าระวังโรคระบาดรุนแรงที่มากับเรือเข้าใช้บริการท่าเรือ",2,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [4,"int","เพลิงไหม้/อัคคีภัยอาคารที่ทำการ",1,5,"L","ดำเนินการตามมาตรการของ กทท."],
+ [5,"int","อุปกรณ์สารสนเทศ (IT) ชำรุดใช้งานไม่ได้",4,1,"L","Backup ข้อมูลสำคัญ / มีอุปกรณ์สำรอง"],
+ [6,"int","ระบบเครือข่าย กทท. ขัดข้อง (อินเทอร์เน็ต/ระบบสารสนเทศใช้ไม่ได้)",4,1,"L","Backup / ประสาน ฝทส. (Help Desk) / อุปกรณ์สำรอง / Pocket Wifi"],
+ [7,"int","คอมพิวเตอร์ถูกโจมตีผ่านเครือข่าย (Cyber Attack)",1,1,"VL","ดำเนินการตามมาตรการของ ฝทส."],
+ [8,"int","ข้อมูล (Data) ในระบบสารสนเทศเสียหาย",2,1,"VL","Backup ข้อมูลสำคัญ / มีอุปกรณ์สำรอง"],
+ [9,"int","การทำงานผิดพลาดของพนักงาน (Human Error)",3,1,"VL","ตรวจสอบงานตามลำดับขั้น / แบ่งปันประสบการณ์สม่ำเสมอ"],
+ [10,"int","การประท้วง/นัดหยุดงานของพนักงานในองค์กร",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [11,"int","การรั่วไหลของสารเคมี/สินค้าอันตราย",1,5,"L","ดำเนินการตามมาตรการของ กทท."],
+ [12,"int","สาธารณูปโภคภายในอาคารบกพร่อง (น้ำรั่ว/ไฟฟ้าขัดข้อง)",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [13,"int","เครื่องจักร/อุปกรณ์อายุการใช้งานนาน ขาดการบำรุงรักษา",1,1,"VL","แจ้งหน่วยงานที่รับผิดชอบ / จัดทำแผนซ่อมบำรุงระยะยาว"],
+ [14,"int","บุคลากรสำคัญของหน่วยงานปฏิบัติงานไม่ได้",1,1,"VL","มอบหมายงานล่วงหน้า / แบ่งปันข้อมูลให้ทำงานทดแทนกันได้"],
+ [15,"int","อุบัติเหตุจากการขนถ่ายสินค้า",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [16,"ext","การก่อการร้าย/ก่อวินาศกรรม",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [17,"ext","การขู่วางระเบิด",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [18,"ext","การจลาจล",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [19,"ext","การจราจรทางบกติดขัดอย่างหนัก",1,1,"VL","ขยายเวลาการเข้าปฏิบัติงาน"],
+ [20,"ext","เส้นทางขนส่งชำรุด (บก/น้ำ) / ร่องน้ำตื้นเขิน",1,3,"VL","ดำเนินการตามมาตรการของ กทท. / Work From Home"],
+ [21,"ext","ประท้วง/ชุมนุมทางการเมืองภายนอกพื้นที่",1,1,"VL","มาตรการ กทท. / Work From Home"],
+ [22,"ext","ชุมชนโดยรอบปิดล้อม/ปิดเส้นทาง/ปิดประตูทางเข้าออก",1,1,"VL","มาตรการ กทท. / Work From Home"],
+ [23,"ext","ประท้วง/นัดหยุดงานของบุคลากรจ้างเหมา",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [24,"ext","ประท้วงปิดล้อมหน้าสถานที่ปฏิบัติงาน/อาคารที่ทำการ",1,1,"VL","มาตรการ กทท. / Work From Home"],
+ [25,"ext","คู่ค้า/คู่สัญญา/ลูกค้าหลักหยุดชะงัก",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [26,"ext","ผู้ให้บริการสื่อสารคมนาคมภายนอกหยุดชะงัก",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [27,"ext","ระบบสาธารณูปโภคพื้นฐานภายนอกหยุดชะงัก (ไฟฟ้า/ประปา)",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [28,"ext","อุบัติเหตุจากเรือสินค้า (เพลิงไหม้/ชนท่า/จมขวางร่องน้ำ)",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [29,"ext","น้ำมันขาดแคลน",3,3,"M","มาตรการ กทท. / Work From Home"],
+ [30,"slow","ความเชื่อมั่นจากลูกค้า/คู่ค้าลดลง",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [31,"slow","ถูกต่อต้านจากชุมชน (ทำธุรกิจไม่เป็นมิตรต่อสิ่งแวดล้อม)",1,1,"VL","ดำเนินการตามมาตรการของ กทท."],
+ [32,"slow","ไม่สามารถพัฒนาศักยภาพพนักงานให้ทัดเทียมองค์กรชั้นนำ",1,1,"VL","สนับสนุนให้ทุกคนเข้ารับการฝึกอบรม"],
+ [33,"slow","ระบบบริหารทรัพยากรบุคคลมีปัญหา (พนักงานตึงเครียดสะสม)",1,1,"VL","พูดคุย/แบ่งปันปัญหา/รับฟัง"],
+ [34,"slow","ฝุ่น PM 2.5",4,1,"L","ดำเนินการตามมาตรการของ กทท."],
+];
+const CATS={nat:"🌪️ ด้านภัยธรรมชาติ",int:"🏢 หน่วยงานภายในองค์กร",ext:"🌐 ปัจจัยจากภายนอกองค์กร",slow:"🐌 ภัยที่ค่อยๆ กัดกินองค์กรอย่างช้าๆ"};
+const LVLCLASS={VL:"bg-vl",L:"bg-l",M:"bg-m",H:"bg-h",E:"bg-e"};
+const MATRIX={5:["L","H","H","E","E"],4:["L","M","H","H","E"],3:["VL","L","M","H","H"],2:["VL","L","L","M","H"],1:["VL","VL","VL","L","L"]};
+const LK_LABEL={5:"5 สูงมาก",4:"4 สูง",3:"3 ปานกลาง",2:"2 ต่ำ",1:"1 ต่ำมาก"};
+const METRICS=[
+ ["MTPD","Max Tolerable Period of Disruption","ระยะเวลาสูงสุดที่ยังทนต่อการหยุดชะงักได้ — เกินนี้กระทบองค์กรรุนแรง","ค่าอ้างอิง กทท. = 48 ชั่วโมง"],
+ ["RTO","Recovery Time Objective","เวลาเป้าหมายที่ต้องกู้คืนงาน/ระบบให้กลับมาทำงานได้ (ต้อง < MTPD)","ย้ายสถานที่ +24 ชม. + เวลาตัวเอง"],
+ ["RPO","Recovery Point Objective","ข้อมูลที่ยอมให้หายได้สูงสุด ย้อนไปถึงเมื่อไหร่","ขึ้นกับความถี่ของการ Backup"],
+ ["MAC","Minimum Activity Criteria","เกณฑ์กิจกรรมขั้นต่ำที่ยังต้องคงไว้ในภาวะวิกฤต","ทรัพยากรขั้นต่ำที่จำเป็น"],
+];
+const AUDIT=[
+ ["4","บริบทขององค์กร (Context)",[
+  ["กำหนดประเด็นภายใน/ภายนอกที่เกี่ยวข้องกับ BCM","เอกสารวิเคราะห์บริบทองค์กร (Context)"],
+  ["ระบุผู้มีส่วนได้เสียและความต้องการ (รวมข้อกำหนดกฎหมาย/ระเบียบ)","ทะเบียนผู้มีส่วนได้เสียและข้อกำหนด"],
+  ["กำหนดขอบเขตระบบ BCMS ของหน่วยงานชัดเจน","เอกสารกำหนดขอบเขต (Scope)"],
+ ]],
+ ["5","ภาวะผู้นำ (Leadership)",[
+  ["ผู้บริหารแสดงความมุ่งมั่นและสนับสนุนทรัพยากร","หลักฐานการอนุมัติ/งบประมาณ/การเข้าร่วมของผู้บริหาร"],
+  ["มีนโยบาย BCM ที่อนุมัติและสื่อสารทั่วถึง","นโยบาย BCM ที่ลงนาม + หลักฐานการสื่อสาร"],
+  ["กำหนดบทบาท หน้าที่ ความรับผิดชอบ คณะทำงาน BCM","คำสั่งแต่งตั้ง + ผังบทบาท"],
+ ]],
+ ["6","การวางแผน (Planning)",[
+  ["ประเมินความเสี่ยงและโอกาส และวางแผนจัดการ","ทะเบียนความเสี่ยง/แผนจัดการ"],
+  ["กำหนดวัตถุประสงค์ BCM ที่วัดผลได้ และแผนบรรลุ","วัตถุประสงค์ + ตัวชี้วัด + แผน"],
+  ["วางแผนการเปลี่ยนแปลงระบบ BCMS อย่างเป็นระบบ","บันทึกการบริหารการเปลี่ยนแปลง"],
+ ]],
+ ["7","การสนับสนุน (Support)",[
+  ["จัดสรรทรัพยากรเพียงพอต่อการดำเนินงาน BCM","แผนทรัพยากร/งบประมาณที่อนุมัติ"],
+  ["บุคลากรมีความสามารถ ผ่านการอบรม BCM","ทะเบียนการอบรม/ประวัติผู้เข้าอบรม"],
+  ["สร้างความตระหนัก BCM ในหน่วยงาน","หลักฐานกิจกรรมสื่อสาร/ประชาสัมพันธ์ BCM"],
+  ["มีช่องทางสื่อสารภายใน/ภายนอกในภาวะวิกฤต","แผนการสื่อสาร + รายชื่อผู้ติดต่อ"],
+  ["ควบคุมเอกสารและสารสนเทศ (เลข Version ตรงกัน)","ทะเบียนเอกสารควบคุม"],
+ ]],
+ ["8","การดำเนินงาน (Operation)",[
+  ["จัดทำ RA ครบถ้วนและทบทวนเป็นปัจจุบัน","เอกสาร RA ปีล่าสุดที่อนุมัติ"],
+  ["ประเมินโอกาส/ผลกระทบตาม Scale A/B ถูกต้อง","ตารางคะแนน + การคำนวณระดับความเสี่ยง"],
+  ["จัดทำ BIA ระบุ CBF และกำหนด MTPD/RTO/RPO/MAC","เอกสาร BIA + แบบที่ 1–4 (ถ้ามี CBF)"],
+  ["กำหนดกลยุทธ์และโซลูชันความต่อเนื่อง (Recovery Strategy)","เอกสารกลยุทธ์/ทางเลือกสำรอง"],
+  ["จัดทำแผน BCP และภาคผนวกครบถ้วน","แผน BCP + ทีมหลัก/สำรอง/ทรัพยากร/ผู้ติดต่อ"],
+  ["กำหนดโครงสร้างตอบสนองเหตุและเกณฑ์ประกาศใช้แผน","ผังโครงสร้างตอบสนอง + เกณฑ์ trigger"],
+  ["จัดทำ Call Tree และการเตือนภัย/สื่อสาร","ผัง Call Tree + แผนสื่อสารวิกฤต ล่าสุด"],
+  ["ทดสอบและฝึกซ้อมแผน (Exercise) อย่างน้อยปีละ 1 ครั้ง","รายงานผลการทดสอบ/ฝึกซ้อม"],
+ ]],
+ ["9","การประเมินสมรรถนะ (Performance)",[
+  ["ติดตาม วัด วิเคราะห์ และประเมินผล BCM","ตัวชี้วัด + ผลการติดตาม"],
+  ["ดำเนินการตรวจประเมินภายใน (Internal Audit) ตามแผน","แผน IA + รายงาน IA"],
+  ["ทบทวนโดยฝ่ายบริหาร (Management Review)","รายงานการประชุมทบทวนฝ่ายบริหาร"],
+ ]],
+ ["10","การปรับปรุง (Improvement)",[
+  ["จัดการสิ่งไม่เป็นไปตามข้อกำหนดและแก้ไข (CAR/OFI)","ทะเบียน CAR/OFI + สถานะการแก้ไข"],
+  ["ปรับปรุงต่อเนื่องและทบทวนเอกสารปีถัดไป (ทำลายฉบับเก่า)","เอกสารฉบับปรับปรุง + บันทึกการทำลาย"],
+ ]],
+];
+
+/* ===== LOCK ===== */
+const lock=document.getElementById('lock'),app=document.getElementById('app');
+const emailEl=document.getElementById('email'),errEl=document.getElementById('lockErr');
+// build decorative rings
+const ringsEl=document.getElementById('rings');
+[120,240,380,540].forEach(s=>{const i=document.createElement('span');i.style.width=i.style.height=s+'px';ringsEl.appendChild(i);});
+function tryUnlock(){
+  const v=emailEl.value.trim();
+  if(/^[^\s@]+@port\.co\.th$/i.test(v)){lock.classList.add('hidden');app.classList.add('show');errEl.textContent='';}
+  else if(!v){errEl.textContent='กรุณากรอกอีเมล';}
+  else{errEl.textContent='อีเมลต้องลงท้ายด้วย @port.co.th';}
+}
+document.getElementById('unlockBtn').onclick=tryUnlock;
+emailEl.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock();});
+function logout(){app.classList.remove('show');lock.classList.remove('hidden');emailEl.value='';emailEl.focus();}
+
+/* ===== NAV ===== */
+const TITLES={overview:["00","ภาพรวม BCM"],abbr:["01","คำย่อทั้งหมด"],ra:["02","RA — การวิเคราะห์ความเสี่ยง"],
+ bia:["03","BIA — การวิเคราะห์ผลกระทบทางธุรกิจ"],bcp:["04","BCP — แผนรับมือความต่อเนื่อง"],calltree:["05","Call Tree — แผนผังแจ้งเหตุ"],bcpdoc:["06","BCP Document — เอกสารฉบับเต็ม"],audit:["07","Internal Audit Checklist"]};
+document.querySelectorAll('#nav button').forEach(b=>{
+  b.onclick=()=>{const p=b.dataset.p;
+    document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    document.getElementById('page-'+p).classList.add('active');
+    document.getElementById('peyebrow').textContent='SECTION '+TITLES[p][0];
+    document.getElementById('ptitle').textContent=TITLES[p][1];
+    window.scrollTo(0,0);toggleSidebar(false);
+  };
+});
+function toggleSidebar(force){const sb=document.getElementById('sidebar'),sc=document.getElementById('scrim');
+  const open=force===undefined?!sb.classList.contains('open'):force;
+  sb.classList.toggle('open',open);sc.classList.toggle('show',open);}
+
+/* ===== ABBR ===== */
+const ag=document.getElementById('abbrGrid');
+ABBR.forEach(a=>{const d=document.createElement('div');d.className='abbr';
+  d.innerHTML=`<div class="more">＋</div><div class="code">${a[0]}</div><div class="en">${a[1]}</div><div class="th">${a[2]}</div>`;
+  d.onclick=()=>{d.classList.toggle('open');d.querySelector('.more').textContent=d.classList.contains('open')?'－':'＋';};
+  ag.appendChild(d);});
+
+/* ===== METRICS ===== */
+const mg=document.getElementById('metrics');
+METRICS.forEach(m=>{const d=document.createElement('div');d.className='metric';
+  d.innerHTML=`<div class="mc">${m[0]}</div><div class="me">${m[1]}</div><div class="md">${m[2]}</div><div class="mv">📘 ${m[3]}</div>`;
+  mg.appendChild(d);});
+
+/* ===== MATRIX ===== */
+const cellCount={};THREATS.forEach(t=>{const k=t[3]+'-'+t[4];cellCount[k]=(cellCount[k]||0)+1;});
+let mh='<tr><th class="corner">L \\ I</th><th>1<br>ต่ำมาก</th><th>2<br>ต่ำ</th><th>3<br>ปานกลาง</th><th>4<br>สูง</th><th>5<br>สูงมาก</th></tr>';
+[5,4,3,2,1].forEach(L=>{mh+=`<tr><th class="rowh">${LK_LABEL[L]}</th>`;
+  for(let I=1;I<=5;I++){const lv=MATRIX[L][I-1];const c=cellCount[L+'-'+I]||0;
+    mh+=`<td class="mcell ${LVLCLASS[lv]} ${c?'':'empty'}" data-l="${L}" data-i="${I}" onclick="cellFilter(${L},${I})">${lv}${c?`<span class="cnt">${c}</span>`:''}</td>`;}
+  mh+='</tr>';});
+document.getElementById('matrix').innerHTML=mh;
+
+/* ===== RA TABLE ===== */
+let activeFilter=null;
+function renderRA(){const body=document.getElementById('raBody');body.innerHTML='';let lastCat=null,shown=0;
+  THREATS.forEach(t=>{const[id,cat,name,lk,mx,lv,mit]=t;
+    if(activeFilter&&!(lk===activeFilter.l&&mx===activeFilter.i))return;
+    if(cat!==lastCat){const cr=document.createElement('tr');cr.className='cat-row';cr.innerHTML=`<td colspan="6">${CATS[cat]}</td>`;body.appendChild(cr);lastCat=cat;}
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono" style="color:var(--muted)">${id}</td><td>${name}</td><td class="lk-cell">${lk}</td>
+      <td class="imp-max">${mx}</td><td><span class="lvl-badge ${LVLCLASS[lv]}">${lv}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${mit}</td>`;
+    body.appendChild(tr);shown++;});
+  if(activeFilter&&shown===0)body.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:26px">ไม่มีภัยคุกคามในช่องนี้ (โอกาส ${activeFilter.l} × Impact ${activeFilter.i})</td></tr>`;
+}
+function cellFilter(L,I){document.querySelectorAll('.mcell').forEach(c=>c.classList.remove('sel'));
+  if(activeFilter&&activeFilter.l===L&&activeFilter.i===I){clearFilter();return;}
+  document.querySelector(`.mcell[data-l="${L}"][data-i="${I}"]`).classList.add('sel');activeFilter={l:L,i:I};
+  const lv=MATRIX[L][I-1];
+  document.getElementById('filterInfo').innerHTML=`กรอง: โอกาสเกิด <b>${L}</b> × Impact <b>${I}</b> → ระดับ <span class="lvl-badge ${LVLCLASS[lv]}">${lv}</span>`;
+  document.getElementById('clrBtn').style.display='inline-block';renderRA();}
+function clearFilter(){activeFilter=null;document.querySelectorAll('.mcell').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('filterInfo').textContent='ภัยคุกคามทั้งหมด 34 รายการ — ของ กผว. ปี 2569';
+  document.getElementById('clrBtn').style.display='none';renderRA();}
+renderRA();
+
+/* ===== RA STATS ===== */
+const cnt={VL:0,L:0,M:0,H:0,E:0};THREATS.forEach(t=>cnt[t[5]]++);
+const rs=document.getElementById('raStats');
+[["t","ทั้งหมด",THREATS.length],["vl","VL ต่ำมาก",cnt.VL],["l","L ต่ำ",cnt.L],["m","M ปานกลาง",cnt.M],["h","H สูง",cnt.H],["e","E สูงมาก",cnt.E]]
+.forEach(s=>{const d=document.createElement('div');d.className='stat s-'+s[0];d.innerHTML=`<div class="v">${s[2]}</div><div class="k">${s[1]}</div>`;rs.appendChild(d);});
+
+/* ===== AUDIT ===== */
+const STORE_KEY='bcm_kpw_audit_2569_v2';
+let auditState={};try{const s=localStorage.getItem(STORE_KEY);if(s)auditState=JSON.parse(s);}catch(e){}
+function saveAudit(){try{localStorage.setItem(STORE_KEY,JSON.stringify(auditState));}catch(e){}}
+const al=document.getElementById('auditList');let idx=0;
+AUDIT.forEach(grp=>{const g=document.createElement('div');g.className='audit-grp';
+  g.innerHTML=`<span class="gc">Clause ${grp[0]}</span><span class="gt">${grp[1]}</span><span class="gl"></span>`;al.appendChild(g);
+  grp[2].forEach(item=>{const i=idx++;const key='q'+i;const done=!!auditState[key];
+    const c=document.createElement('div');c.className='chk'+(done?' done':'');
+    c.innerHTML=`<div class="box">${done?'✓':''}</div><div class="num">${(i+1).toString().padStart(2,'0')}</div>
+      <div><div class="ct">${item[0]}</div><div class="cd">📎 เอกสารที่ต้องแสดง: ${item[1]}</div></div>`;
+    c.querySelector('.box').onclick=(e)=>{e.stopPropagation();toggleChk(i,key,c);};
+    c.onclick=()=>c.classList.toggle('expand');al.appendChild(c);});});
+function toggleChk(i,key,el){auditState[key]=!auditState[key];el.classList.toggle('done',auditState[key]);
+  el.querySelector('.box').textContent=auditState[key]?'✓':'';saveAudit();updateProg();}
+function updateProg(){const total=27;let done=0;for(let i=0;i<total;i++)if(auditState['q'+i])done++;
+  const pct=Math.round(done/total*100);
+  document.getElementById('progDone').textContent=done;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progTxt').textContent=done===0?'ยังไม่เริ่มตรวจ':done===total?'✅ ตรวจครบทุกหัวข้อแล้ว':`ตรวจแล้ว ${done} หัวข้อ · เหลืออีก ${total-done} หัวข้อ`;
+  document.getElementById('gaugeAudit').textContent=pct;
+  document.getElementById('gaugeAuditSub').textContent=done===0?'27 หัวข้อตรวจประเมิน':`ตรวจแล้ว ${done}/27 หัวข้อ`;}
+function resetAudit(){auditState={};saveAudit();
+  document.querySelectorAll('#auditList .chk').forEach(c=>{c.classList.remove('done');c.querySelector('.box').textContent='';});updateProg();}
+updateProg();
+</script>
+</body>
+</html>
